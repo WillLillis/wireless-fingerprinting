@@ -10,7 +10,7 @@ import keras
 from keras import optimizers
 from keras.layers import Input
 from keras.models import Model, load_model
-import complexnn
+import cxnn.complexnn
 from cxnn.complexnn import ComplexConv1D, utils, Modrelu
 from cxnn.models import network_20_modrelu_short, network_20_reim, \
         network_20_reim_2x, network_20_reim_sqrt2x, network_20_mag, \
@@ -148,7 +148,7 @@ def train_20(dict_data, num_aug_test=1, checkpoint_in=None,
         densenet = Model(data_input, output)
     else:
         densenet = load_model(checkpoint_in,
-                              custom_objects={'ComplexConv1D': complexnn.ComplexConv1D,
+                              custom_objects={'ComplexConv1D': cxnn.complexnn.ComplexConv1D,
                                               'GetAbs': utils.GetAbs})
 
     # Print model architecture

@@ -8,7 +8,7 @@ from keras import optimizers
 from keras.layers import Dense, Input, Conv1D, GlobalAveragePooling1D
 from keras.models import Model, load_model
 from keras.regularizers import l2
-import complexnn
+import cxnn.complexnn
 from cxnn.complexnn import ComplexConv1D, utils, Modrelu
 
 
@@ -769,7 +769,7 @@ def train(dict_data, checkpoint_in=None, checkpoint_out=None,
         densenet = Model(data_input, output)
     else:
         densenet = load_model(checkpoint_in,
-                              custom_objects={'ComplexConv1D':complexnn.ComplexConv1D,
+                              custom_objects={'ComplexConv1D': cxnn.complexnn.ComplexConv1D,
                                               'GetAbs': utils.GetAbs})
 
     # Print model architecture
