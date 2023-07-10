@@ -10,12 +10,9 @@ import csv
 import math
 import fractions
 import resampy
-from tqdm import tqdm, trange
-import matplotlib
+from tqdm import tqdm
 import matplotlib.pyplot as plt
 from scipy.fftpack import fft, ifft, fftshift, ifftshift
-import ipdb
-from sklearn.preprocessing import normalize
 
 
 def preprocess_wifi(data_dict, sample_duration, sample_rate, preprocess_type=1, progress=True):
@@ -474,7 +471,7 @@ def get_residuals_preamble(preamble_in, fs, method='subtraction', channel_method
 
 def basic_equalize_preamble(preamble_in, fs, verbose=False, label=''):
     """
-    Function that strips out the effect of the channel from the preamble. 
+    Function that strips out the effect of the channel from the preamble.
     It does the following:
         1. LTI channel estimation (with delay spread <= length of cyclic prefix)
         2. Remove the channel estimate from the preamble
@@ -1169,7 +1166,7 @@ def get_json_signal(json_annotations, capture, signal_id, type=None):
 
 
 def read_sample(filename, start_sample, sample_count, desired_buffer):
-    ''' 
+    '''
     Read samples
     '''
 

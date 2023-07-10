@@ -5,15 +5,15 @@
 # Authors: Olexa Bilaniuk
 #
 
-import keras.backend                        as KB
-import keras.engine                         as KE
-import keras.layers                         as KL
-import keras.optimizers                     as KO
-import theano                               as T
-import theano.ifelse                        as TI
-import theano.tensor                        as TT
-import theano.tensor.fft                    as TTF
-import numpy                                as np
+import keras.backend        as KB
+import keras.engine         as KE
+import keras.layers         as KL
+import keras.optimizers     as KO
+import theano               as T
+import theano.ifelse        as TI
+import theano.tensor        as TT
+import theano.tensor.fft    as TTF
+import numpy                as np
 
 
 #
@@ -26,18 +26,18 @@ import numpy                                as np
 #
 
 def fft(z):
-	B      = z.shape[0]//2
-	L      = z.shape[1]
-	C      = TT.as_tensor_variable(np.asarray([[[1,-1]]], dtype=T.config.floatX))
-	Zr, Zi = TTF.rfft(z[:B], norm="ortho"), TTF.rfft(z[B:], norm="ortho")
-	isOdd  = TT.eq(L%2, 1)
-	Zr     = TI.ifelse(isOdd, TT.concatenate([Zr, C*Zr[:,1:  ][:,::-1]], axis=1),
+    B      = z.shape[0]//2
+    L      = z.shape[1]
+    C      = TT.as_tensor_variable(np.asarray([[[1,-1]]], dtype=T.config.floatX))
+    Zr, Zi = TTF.rfft(z[:B], norm="ortho"), TTF.rfft(z[B:], norm="ortho")
+    isOdd  = TT.eq(L%2, 1)
+    Zr     = TI.ifelse(isOdd, TT.concatenate([Zr, C*Zr[:,1:  ][:,::-1]], axis=1),
 	                          TT.concatenate([Zr, C*Zr[:,1:-1][:,::-1]], axis=1))
-	Zi     = TI.ifelse(isOdd, TT.concatenate([Zi, C*Zi[:,1:  ][:,::-1]], axis=1),
+    Zi     = TI.ifelse(isOdd, TT.concatenate([Zi, C*Zi[:,1:  ][:,::-1]], axis=1),
 	                          TT.concatenate([Zi, C*Zi[:,1:-1][:,::-1]], axis=1))
-	Zi     = (C*Zi)[:,:,::-1]  # Zi * i
-	Z      = Zr+Zi
-	return TT.concatenate([Z[:,:,0], Z[:,:,1]], axis=0)
+    Zi     = (C*Zi)[:,:,::-1]  # Zi * i
+    Z      = Zr+Zi
+    return TT.concatenate([Z[:,:,0], Z[:,:,1]], axis=0)
 def ifft(z):
 	B      = z.shape[0]//2
 	L      = z.shape[1]

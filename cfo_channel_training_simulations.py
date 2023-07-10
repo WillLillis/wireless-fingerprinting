@@ -3,21 +3,15 @@ export path_to_config="/home/rfml/wifi-rebuttal/wifi-fingerprinting-journal/conf
 export path_to_data="/home/rfml/wifi-rebuttal/wifi-fingerprinting-journal/data"
 '''
 
-import matplotlib as mpl
 import os
 import json
-from tqdm import trange, tqdm
-import argparse
-from timeit import default_timer as timer
 import numpy as np
-import os
-import matplotlib.pyplot as plt
 
 
-from simulators import signal_power_effect, plot_signals, physical_layer_channel, physical_layer_cfo, cfo_compansator, equalize_channel, augment_with_channel, augment_with_cfo, get_residual
+from simulators import signal_power_effect, plot_signals, \
+        physical_layer_channel, physical_layer_cfo, cfo_compansator, \
+        equalize_channel, augment_with_channel, augment_with_cfo, get_residual
 from cxnn.train import train_20, train_200
-from preproc.fading_model import normalize, add_custom_fading_channel, add_freq_offset
-from preproc.preproc_wifi import basic_equalize_preamble, offset_compensate_preamble
 from experiment_setup import get_arguments
 
 '''
@@ -35,7 +29,8 @@ Real life channel and CFO experiments are done in this code.
 #
 
 
-def multiple_day_fingerprint(architecture, config, num_days, seed_days, seed_test_day, experiment_setup):
+def multiple_day_fingerprint(architecture, config, num_days,
+                             seed_days, seed_test_day, experiment_setup):
 
     # print(architecture)
 
@@ -77,9 +72,9 @@ def multiple_day_fingerprint(architecture, config, num_days, seed_days, seed_tes
     seed_phy_test = seed_test_day
     channel_type_phy_train = config['channel_type_phy_train']
     channel_type_phy_test = config['channel_type_phy_test']
-    phy_noise = config['phy_noise']
-    snr_train_phy = config['snr_train_phy']
-    snr_test_phy = config['snr_test_phy']
+    # phy_noise = config['phy_noise'] # unused vars...
+    # snr_train_phy = config['snr_train_phy']
+    # snr_test_phy = config['snr_test_phy']
 
     # -------------------------------------------------
     # Physical CFO parameters
@@ -117,7 +112,7 @@ def multiple_day_fingerprint(architecture, config, num_days, seed_days, seed_tes
     channel_method = config['channel_method']
     noise_method = config['noise_method']
     delay_seed_aug_train = False
-    delay_seed_aug_test = False
+    # delay_seed_aug_test = False
     keep_orig_train = False
     keep_orig_test = False
     snr_train = config['snr_train']
@@ -166,38 +161,40 @@ def multiple_day_fingerprint(architecture, config, num_days, seed_days, seed_tes
 
     # import pdb
     # pdb.set_trace()
-    # plt.plot(np.abs(dict_wifi["x_train"][0, :, 0]+1j*dict_wifi["x_train"][0, :, 1]))
+    # plt.plot(np.abs(
+    #     dict_wifi["x_train"][0, :, 0]+1j*dict_wifi["x_train"][0, :, 1]))
     # plt.show()
 
     data_format += '_{}'.format(architecture)
 
-    num_train = dict_wifi['x_train'].shape[0]
-    num_validation = dict_wifi['x_validation'].shape[0]
-    num_test = dict_wifi['x_test'].shape[0]
+    # num_train = dict_wifi['x_train'].shape[0]
+    # num_validation = dict_wifi['x_validation'].shape[0]
+    # num_test = dict_wifi['x_test'].shape[0]
+    # this was commented, even though 'num_classes' is referenced farther down
     num_classes = dict_wifi['y_train'].shape[1]
-
     sampling_rate = sample_rate * 1e+6
-    fs = sample_rate * 1e+6
+    # fs = sample_rate * 1e+6
 
-    x_train_orig = dict_wifi['x_train'].copy()
-    y_train_orig = dict_wifi['y_train'].copy()
+    # x_train_orig = dict_wifi['x_train'].copy()
+    # y_train_orig = dict_wifi['y_train'].copy()
 
-    x_validation_orig = dict_wifi['x_validation'].copy()
-    y_validation_orig = dict_wifi['y_validation'].copy()
+    # x_validation_orig = dict_wifi['x_validation'].copy()
+    # y_validation_orig = dict_wifi['y_validation'].copy()
 
-    x_test_orig = dict_wifi['x_test'].copy()
-    y_test_orig = dict_wifi['y_test'].copy()
+    # x_test_orig = dict_wifi['x_test'].copy()
+    # y_test_orig = dict_wifi['y_test'].copy()
 
-    if check_signal_power_effect == True:
+    if check_signal_power_effect:
         dict_wifi, data_format = signal_power_effect(dict_wifi=dict_wifi,
                                                      data_format=data_format)
 
-    if plot_signal == True:
+    if plot_signal:
         plot_signals(dict_wifi=dict_wifi)
 
     if equalize_train_before or equalize_test_before:
         print('\nEqualization Before')
-        print('\tTrain: {}, Test: {}'.format(equalize_train_before, equalize_test_before))
+        print('\tTrain: {}, Test: {}'.format(
+            equalize_train_before, equalize_test_before))
 
         data_format = data_format + '-eq'
 
@@ -225,30 +222,32 @@ def multiple_day_fingerprint(architecture, config, num_days, seed_days, seed_tes
     # Physical channel simulation (different days)
     # --------------------------------------------------------------------------------------------
     if add_channel:
-        dict_wifi, data_format = physical_layer_channel(dict_wifi=dict_wifi,
-                                                        phy_method=phy_method,
-                                                        channel_type_phy_train=channel_type_phy_train,
-                                                        channel_type_phy_test=channel_type_phy_test,
-                                                        channel_method=channel_method,
-                                                        noise_method=noise_method,
-                                                        seed_phy_train=seed_phy_train,
-                                                        seed_phy_test=seed_phy_test,
-                                                        sampling_rate=sampling_rate,
-                                                        data_format=data_format)
+        dict_wifi, data_format = \
+          physical_layer_channel(dict_wifi=dict_wifi,
+                                 phy_method=phy_method,
+                                 channel_type_phy_train=channel_type_phy_train,
+                                 channel_type_phy_test=channel_type_phy_test,
+                                 channel_method=channel_method,
+                                 noise_method=noise_method,
+                                 seed_phy_train=seed_phy_train,
+                                 seed_phy_test=seed_phy_test,
+                                 sampling_rate=sampling_rate,
+                                 data_format=data_format)
 
     # --------------------------------------------------------------------------------------------
     # Physical offset simulation (different days)
     # --------------------------------------------------------------------------------------------
     if add_cfo:
 
-        dict_wifi, data_format = physical_layer_cfo(dict_wifi=dict_wifi,
-                                                    df_phy_train=df_phy_train,
-                                                    df_phy_test=df_phy_test,
-                                                    seed_phy_train_cfo=seed_phy_train_cfo,
-                                                    seed_phy_test_cfo=seed_phy_test_cfo,
-                                                    sampling_rate=sampling_rate,
-                                                    phy_method_cfo=phy_method_cfo,
-                                                    data_format=data_format)
+        dict_wifi, data_format = \
+            physical_layer_cfo(dict_wifi=dict_wifi,
+                               df_phy_train=df_phy_train,
+                               df_phy_test=df_phy_test,
+                               seed_phy_train_cfo=seed_phy_train_cfo,
+                               seed_phy_test_cfo=seed_phy_test_cfo,
+                               sampling_rate=sampling_rate,
+                               phy_method_cfo=phy_method_cfo,
+                               data_format=data_format)
 
     # --------------------------------------------------------------------------------------------
     # Physical offset compensation
@@ -288,40 +287,43 @@ def multiple_day_fingerprint(architecture, config, num_days, seed_days, seed_tes
 
         seed_aug = np.max(seed_phy_train) + seed_phy_test + num_classes + 1
 
-        dict_wifi, data_format = augment_with_channel(dict_wifi=dict_wifi,
-                                                      aug_type=aug_type,
-                                                      channel_method=channel_method,
-                                                      num_aug_train=num_aug_train,
-                                                      num_aug_test=num_aug_test,
-                                                      keep_orig_train=keep_orig_train,
-                                                      keep_orig_test=keep_orig_test,
-                                                      num_ch_train=num_ch_train,
-                                                      num_ch_test=num_ch_test,
-                                                      channel_type_aug_train=channel_type_aug_train,
-                                                      channel_type_aug_test=channel_type_aug_test,
-                                                      delay_seed_aug_train=delay_seed_aug_train,
-                                                      snr_train=snr_train,
-                                                      noise_method=noise_method,
-                                                      seed_aug=seed_aug,
-                                                      sampling_rate=sampling_rate,
-                                                      data_format=data_format)
+        dict_wifi, data_format = \
+            augment_with_channel(dict_wifi=dict_wifi,
+                                 aug_type=aug_type,
+                                 channel_method=channel_method,
+                                 num_aug_train=num_aug_train,
+                                 num_aug_test=num_aug_test,
+                                 keep_orig_train=keep_orig_train,
+                                 keep_orig_test=keep_orig_test,
+                                 num_ch_train=num_ch_train,
+                                 num_ch_test=num_ch_test,
+                                 channel_type_aug_train=channel_type_aug_train,
+                                 channel_type_aug_test=channel_type_aug_test,
+                                 delay_seed_aug_train=delay_seed_aug_train,
+                                 snr_train=snr_train,
+                                 noise_method=noise_method,
+                                 seed_aug=seed_aug,
+                                 sampling_rate=sampling_rate,
+                                 data_format=data_format)
 
     # --------------------------------------------------------------------------------------------
     # Carrier Frequency Offset augmentation
     # --------------------------------------------------------------------------------------------
     if augment_cfo is True:
 
-        seed_aug_cfo = np.max(seed_phy_train_cfo) + seed_phy_test_cfo + num_classes + 1
+        seed_aug_cfo = np.max(seed_phy_train_cfo) +\
+                seed_phy_test_cfo + num_classes + 1
 
-        dict_wifi, data_format = augment_with_cfo(dict_wifi=dict_wifi,
-                                                  aug_type_cfo=aug_type_cfo,
-                                                  df_aug_train=df_aug_train,
-                                                  num_aug_train_cfo=num_aug_train_cfo,
-                                                  keep_orig_train_cfo=keep_orig_train_cfo,
-                                                  rand_aug_train=rand_aug_train,
-                                                  sampling_rate=sampling_rate,
-                                                  seed_aug_cfo=seed_aug_cfo,
-                                                  data_format=data_format)
+        dict_wifi, data_format = \
+            augment_with_cfo(dict_wifi=dict_wifi,
+                             aug_type_cfo=aug_type_cfo,
+                             df_aug_train=df_aug_train,
+                             num_aug_train_cfo=num_aug_train_cfo,
+                             keep_orig_train_cfo=keep_orig_train_cfo,
+                             rand_aug_train=rand_aug_train,
+                             sampling_rate=sampling_rate,
+                             seed_aug_cfo=seed_aug_cfo,
+                             data_format=data_format)
 
     if obtain_residuals is True:
         print('Residuals are being obtained.')
@@ -354,17 +356,20 @@ def multiple_day_fingerprint(architecture, config, num_days, seed_days, seed_tes
     print(checkpoint)
 
     if sample_rate == 20:
-        train_output, model_name, summary = train_20(dict_wifi, checkpoint_in=None,
-                                                     num_aug_test=num_aug_test,
-                                                     checkpoint_out=checkpoint,
-                                                     architecture=architecture,
-                                                     epochs=epochs)
+        train_output, model_name, summary = \
+            train_20(dict_wifi, checkpoint_in=None,
+                     num_aug_test=num_aug_test,
+                     checkpoint_out=checkpoint,
+                     architecture=architecture,
+                     epochs=epochs)
+
     elif sample_rate == 200:
-        train_output, model_name, summary = train_200(dict_wifi, checkpoint_in=None,
-                                                      num_aug_test=num_aug_test,
-                                                      checkpoint_out=checkpoint,
-                                                      architecture=architecture,
-                                                      epochs=epochs)
+        train_output, model_name, summary = \
+            train_200(dict_wifi, checkpoint_in=None,
+                      num_aug_test=num_aug_test,
+                      checkpoint_out=checkpoint,
+                      architecture=architecture,
+                      epochs=epochs)
 
     else:
         raise NotImplementedError
@@ -382,16 +387,20 @@ def multiple_day_fingerprint(architecture, config, num_days, seed_days, seed_tes
         # f.write('Different day scenario\n')
         # if equalize_train is True:
         #   f.write('With preamble equalization\n\n')
-        # f.write('Channel augmentations: {}, keep_orig: {} \n'.format(num_aug_train, keep_orig_train))
+        # f.write('Channel augmentations: {}, keep_orig: {} \n'.format(
+        #    num_aug_train, keep_orig_train))
         # f.write('Channel type: Phy_train: {}, Phy_test: {}, Aug_Train: {}, Aug_Test: {} \n'.format(channel_type_phy_train, channel_type_phy_test, channel_type_aug_train, channel_type_aug_test))
-        # f.write('Seed: Phy_train: {}, Phy_test: {}'.format(seed_phy_train, seed_phy_test))
-        # f.write('No of channels: Train: {}, Test: {} \n'.format(num_ch_train, num_ch_test))
-        # f.write('SNR: Train: {} dB, Test {} dB\n'.format(snr_train, snr_test))
+        # f.write('Seed: Phy_train: {}, Phy_test: {}'.format(
+        #    seed_phy_train, seed_phy_test))
+        # f.write('No of channels: Train: {}, Test: {} \n'.format(
+        #    num_ch_train, num_ch_test))
+        # f.write('SNR: Train: {} dB, Test {} dB\n'.format(
+        #    snr_train, snr_test))
 
         f.write('\nPreprocessing\n\tType: {}\n\tFs: {} MHz\n\tLength: {} us'.format(
             preprocess_type, sample_rate, sample_duration))
 
-        if equalize_train_before == True:
+        if equalize_train_before:
             f.write('\nEqualized signals before any preprocessing')
 
         if add_channel is True:
@@ -400,7 +409,8 @@ def multiple_day_fingerprint(architecture, config, num_days, seed_days, seed_tes
             f.write('\tMethod: {}'.format(phy_method))
             f.write('\tChannel type: Train: {}, Test: {}'.format(
                 channel_type_phy_train, channel_type_phy_test))
-            f.write('\tSeed: Train: {}, Test: {}'.format(seed_phy_train, seed_phy_test))
+            f.write('\tSeed: Train: {}, Test: {}'.format(
+                seed_phy_train, seed_phy_test))
         else:
             f.write('\nPhysical Channel is not added!')
 
@@ -408,8 +418,10 @@ def multiple_day_fingerprint(architecture, config, num_days, seed_days, seed_tes
             f.write('\nPhysical CFO is added!')
             f.write('\nPhysical CFO simulation (different days)')
             f.write('\tMethod: {}'.format(phy_method_cfo))
-            f.write('\tdf_train: {}, df_test: {}'.format(df_phy_train, df_phy_test))
-            f.write('\tSeed: Train: {}, Test: {}'.format(seed_phy_train_cfo, seed_phy_test_cfo))
+            f.write('\tdf_train: {}, df_test: {}'.format(
+                df_phy_train, df_phy_test))
+            f.write('\tSeed: Train: {}, Test: {}'.format(
+                seed_phy_train_cfo, seed_phy_test_cfo))
         else:
             f.write('\nPhysical CFO is not added!')
 
@@ -428,7 +440,8 @@ def multiple_day_fingerprint(architecture, config, num_days, seed_days, seed_tes
             f.write('\tNoise Method: {}'.format(noise_method))
             f.write('\tNo of augmentations: Train: {}, Test: {}\n\tKeep originals: Train: {}, Test: {}'.format(
                 num_aug_train, num_aug_test, keep_orig_train, keep_orig_test))
-            f.write('\tNo. of channels per aug: Train: {}, Test: {}'.format(num_ch_train, num_ch_test))
+            f.write('\tNo. of channels per aug: Train: {}, Test: {}'.format(
+                num_ch_train, num_ch_test))
             f.write('\tChannel type: Train: {}, Test: {}'.format(
                 channel_type_aug_train, channel_type_aug_test))
             f.write('\tSNR: Train: {}, Test: {}'.format(snr_train, snr_test))
@@ -453,7 +466,7 @@ def multiple_day_fingerprint(architecture, config, num_days, seed_days, seed_tes
     print('\nPreprocessing\n\tType: {}\n\tFs: {} MHz\n\tLength: {} us'.format(
         preprocess_type, sample_rate, sample_duration))
 
-    if equalize_train_before == True:
+    if equalize_train_before:
         print('\nEqualized signals before any preprocessing')
 
     if add_channel is True:
@@ -462,7 +475,8 @@ def multiple_day_fingerprint(architecture, config, num_days, seed_days, seed_tes
         print('\tMethod: {}'.format(phy_method))
         print('\tChannel type: Train: {}, Test: {}'.format(
             channel_type_phy_train, channel_type_phy_test))
-        print('\tSeed: Train: {}, Test: {}'.format(seed_phy_train, seed_phy_test))
+        print('\tSeed: Train: {}, Test: {}'.format(
+            seed_phy_train, seed_phy_test))
     else:
         print('\nPhysical Channel is not added!')
 
@@ -471,7 +485,8 @@ def multiple_day_fingerprint(architecture, config, num_days, seed_days, seed_tes
         print('\nPhysical CFO simulation (different days)')
         print('\tMethod: {}'.format(phy_method_cfo))
         print('\tdf_train: {}, df_test: {}'.format(df_phy_train, df_phy_test))
-        print('\tSeed: Train: {}, Test: {}'.format(seed_phy_train_cfo, seed_phy_test_cfo))
+        print('\tSeed: Train: {}, Test: {}'.format(
+            seed_phy_train_cfo, seed_phy_test_cfo))
     else:
         print('\nPhysical CFO is not added!')
 
@@ -490,7 +505,8 @@ def multiple_day_fingerprint(architecture, config, num_days, seed_days, seed_tes
         print('\tNoise Method: {}'.format(noise_method))
         print('\tNo of augmentations: Train: {}, Test: {}\n\tKeep originals: Train: {}, Test: {}'.format(
             num_aug_train, num_aug_test, keep_orig_train, keep_orig_test))
-        print('\tNo. of channels per aug: Train: {}, Test: {}'.format(num_ch_train, num_ch_test))
+        print('\tNo. of channels per aug: Train: {}, Test: {}'.format(
+            num_ch_train, num_ch_test))
         print('\tChannel type: Train: {}, Test: {}'.format(
             channel_type_aug_train, channel_type_aug_test))
         print('\tSNR: Train: {}, Test: {}'.format(snr_train, snr_test))
@@ -564,8 +580,11 @@ if __name__ == '__main__':
         max_seed = 21*20
         seed_test = exp_i * max_seed + 60
         exp_list = [1, 2, 3, 4, 5]
-        seeds_train_multi = [[exp_i * max_seed + s*20 if exp_i * max_seed + s*20 <
-                              seed_test else exp_i * max_seed + (s+1)*20 for s in range(days)] for days in days_multi]
+        seeds_train_multi = [[exp_i * max_seed + s*20
+                              if exp_i * max_seed + s*20 < seed_test
+                              else exp_i * max_seed + (s+1)*20
+                              for s in range(days)]
+                             for days in days_multi]
         for i in range(len(seeds_train_multi)):
             assert seed_test not in seeds_train_multi[i]
 
@@ -576,7 +595,9 @@ if __name__ == '__main__':
 
         for indexx, day_count in enumerate(days_multi):
             train_output = multiple_day_fingerprint(
-                architecture, config, num_days=day_count, seed_days=seeds_train_multi[indexx], seed_test_day=seed_test, experiment_setup=experiment_setup)
+                architecture, config, num_days=day_count,
+                seed_days=seeds_train_multi[indexx],
+                seed_test_day=seed_test, experiment_setup=experiment_setup)
 
             with open("./logs/" + log_name + '.txt', 'a+') as f:
 
@@ -584,7 +605,8 @@ if __name__ == '__main__':
                 if experiment_setup['obtain_residuals']:
                     f.write('Residuals obtained')
                 f.write('\tExperiment: {:}\n'.format(exp_i + 1))
-                f.write('\tSeed train: {:}\n'.format(seeds_train_multi[indexx]))
+                f.write('\tSeed train: {:}\n'.format(
+                    seeds_train_multi[indexx]))
                 f.write('\tSeed test: {:}\n'.format(seed_test))
 
                 for keys, dicts in train_output.items():

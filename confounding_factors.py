@@ -1,6 +1,7 @@
-from preproc.fading_model import normalize, add_custom_fading_channel, add_freq_offset
-from preproc.preproc_wifi import basic_equalize_preamble, offset_compensate_preamble, get_residuals_preamble
-import matplotlib.pyplot as plt
+from preproc.fading_model import normalize, add_custom_fading_channel, \
+        add_freq_offset
+from preproc.preproc_wifi import basic_equalize_preamble, \
+        offset_compensate_preamble, get_residuals_preamble
 '''
 All Simulation Codes needed for CFO and Channel Experiments
 
@@ -8,13 +9,7 @@ Need to add comment to the functions
 '''
 
 import numpy as np
-from timeit import default_timer as timer
-import argparse
-from tqdm import trange, tqdm
-import json
-import os
-import matplotlib as mpl
-
+from tqdm import tqdm
 
 
 def real_to_complex(signals):
@@ -57,13 +52,14 @@ class WifiConfoundingFactors:
 
                 for i in ind_n[idx_seed * num_signals_per_channel: (idx_seed+1) * num_signals_per_channel]:
                     signal = real_to_complex(self.signals[i])
-                    signal_faded = add_custom_fading_channel(signal, 500, self.parameters["sampling_rate"],
-                                                             seed=seed_n,
-                                                             beta=0,
-                                                             delay_seed=False,
-                                                             channel_type=self.parameters["channel_type"],
-                                                             channel_method=self.parameters["channel_method"],
-                                                             noise_method=self.parameters["noise_method"])
+                    signal_faded = \
+                            add_custom_fading_channel(signal, 500, self.parameters["sampling_rate"],
+                                                      seed=seed_n,
+                                                      beta=0,
+                                                      delay_seed=False,
+                                                      channel_type=self.parameters["channel_type"],
+                                                      channel_method=self.parameters["channel_method"],
+                                                      noise_method=self.parameters["noise_method"])
                     signal_faded = normalize(signal_faded)
                     signals_temp[i] = np.concatenate((signal_faded.real.reshape(
                         [-1, 1]), signal_faded.imag.reshape([-1, 1])), axis=1).reshape((1, -1, 2))
@@ -186,41 +182,46 @@ class WifiAugmenter:
 
         signals = real_to_complex(self.signals)
         for i, signal in enumerate(signals):
-            signal_faded = add_custom_fading_channel(signal, parameters["snr"], parameters["sampling_rate"],
-                                                     seed=None,
-                                                     beta=0,
-                                                     delay_seed=False,
-                                                     channel_type=parameters["channel_type"],
-                                                     channel_method=parameters["channel_method"],
-                                                     noise_method=parameters["noise_method"])
+            signal_faded = \
+                    add_custom_fading_channel(signal, parameters["snr"],
+                                              parameters["sampling_rate"],
+                                              seed=None,
+                                              beta=0,
+                                              delay_seed=False,
+                                              channel_type=parameters["channel_type"],
+                                              channel_method=parameters["channel_method"],
+                                              noise_method=parameters["noise_method"])
+
             signals[i] = signal_faded
             self.signals[i] = np.concatenate((signal_faded.real.reshape(
                 [-1, 1]), signal_faded.imag.reshape([-1, 1])), axis=1).reshape((1, -1, 2))
 
     def channel_augmentation(self, parameters, progress_bar=True):
 
-    	num_augmentation = parameters["num_augmentation"]
-    	snr = parameters["snr"]
-    	sampling_rate = parameters["sampling_rate"]
+        num_augmentation = parameters["num_augmentation"]
+        snr = parameters["snr"]
+        sampling_rate = parameters["sampling_rate"]
 
         signals = real_to_complex(self.signals)
         for i, signal in enumerate(signals):
-            signal_faded = add_custom_fading_channel(signal, parameters["snr"], parameters["sampling_rate"],
-                                                     seed=None,
-                                                     beta=0,
-                                                     delay_seed=False,
-                                                     channel_type=parameters["channel_type"],
-                                                     channel_method=parameters["channel_method"],
-                                                     noise_method=parameters["noise_method"])
+            signal_faded = \
+                    add_custom_fading_channel(signal, parameters["snr"],
+                                              parameters["sampling_rate"],
+                                              seed=None, beta=0,
+                                              delay_seed=False,
+                                              channel_type=parameters["channel_type"],
+                                              channel_method=parameters["channel_method"],
+                                              noise_method=parameters["noise_method"])
+
             signals[i] = signal_faded
             self.signals[i] = np.concatenate((signal_faded.real.reshape(
                 [-1, 1]), signal_faded.imag.reshape([-1, 1])), axis=1).reshape((1, -1, 2))
 
         orthogonal_seeds = {}
-	    for i in range(401):
-	        orthogonal_seeds[i] = self.seeds
+        for i in range(401):
+            orthogonal_seeds[i] = self.seeds
 
-	    if progress_bar:
+        if progress_bar:
             augmentations_iters = tqdm(
                 iterable=range(num_augmentation),
                 desc=self.name + " Augmentations",
@@ -232,38 +233,44 @@ class WifiAugmenter:
         for k in augmentations_iters:
             signals_augmented = np.zeros(self.signals.shape)
             if progress_bar:
-	            signals_iters = tqdm(
-	                iterable=range(self.num_signals),
-	                desc=self.name + " Signals",
-	                unit="signal",
-	                leave=False)
-	        else:
-	            signals_iters = range(self.num_signals)
+                signals_iters = tqdm(
+                    iterable=range(self.num_signals),
+                    desc=self.name + " Signals",
+                    unit="signal",
+                    leave=False)
+            else:
+                signals_iters = range(self.num_signals)
 
             for i in signals_iters:
 
                 complex_signals = real_to_complex(self.signals)
-                if parameters["augmentation_type"]=="full_random":
-                    signal_faded = add_custom_fading_channel(complex_signals, parameters["snr"], parameters["sampling_rate"],
-                                                     seed=self.seeds +
-                                                             (i + k * self.num_signals) % (self.num_signals*num_augmentation),
-                                                     beta=0,
-                                                     delay_seed=False,
-                                                     channel_type=parameters["channel_type"],
-                                                     channel_method=parameters["channel_method"],
-                                                     noise_method=parameters["noise_method"])
-                elif parameters["augmentation_type"]=="orthogonal":
-                    signal_faded = add_custom_fading_channel(complex_signals, parameters["snr"], parameters["sampling_rate"],
-                                                     seed=orthogonal_seeds[np.argmax(
+                if parameters["augmentation_type"] == "full_random":
+                    signal_faded = \
+                            add_custom_fading_channel(complex_signals,
+                                                      parameters["snr"],
+                                                      parameters["sampling_rate"],
+                                                      seed=self.seeds +
+                                                      (i + k * self.num_signals) % (self.num_signals*num_augmentation),
+                                                      beta=0, delay_seed=False,
+                                                      channel_type=parameters["channel_type"],
+                                                      channel_method=parameters["channel_method"],
+                                                      noise_method=parameters["noise_method"])
+
+                elif parameters["augmentation_type"] == "orthogonal":
+                    signal_faded = \
+                            add_custom_fading_channel(complex_signals,
+                                                      parameters["snr"],
+                                                      parameters["sampling_rate"],
+                                                      seed=orthogonal_seeds[np.argmax(
                                                                  y_train[i])],
-                                                     beta=0,
-                                                     delay_seed=False,
-                                                     channel_type=parameters["channel_type"],
-                                                     channel_method=parameters["channel_method"],
-                                                     noise_method=parameters["noise_method"])
+                                                      beta=0, delay_seed=False,
+                                                      channel_type=parameters["channel_type"],
+                                                      channel_method=parameters["channel_method"],
+                                                      noise_method=parameters["noise_method"])
+
                     orthogonal_seeds[np.argmax(y_train[i])] += 1
                 else:
-                	raise NotImplementedError
+                    raise NotImplementedError
                 signal_faded = normalize(signal_faded)
                 signals_augmented[i] = np.concatenate((signal_faded.real.reshape(
                     [-1, 1]), signal_faded.imag.reshape([-1, 1])), axis=1).reshape((1, -1, 2))
@@ -280,23 +287,22 @@ class WifiAugmenter:
                 devices_aug = np.concatenate((devices_aug, self.devices), axis=0)
 
         dict_wifi['x_train'] = signals_aug.copy()
-	    dict_wifi['y_train'] = devices_aug.copy()
-	    dict_wifi['fc_train'] = np.tile(dict_wifi['fc_train'], num_aug_train)
+        dict_wifi['y_train'] = devices_aug.copy()
+        dict_wifi['fc_train'] = np.tile(dict_wifi['fc_train'], num_aug_train)
 
-        return 
-
+        return
 
 def augment_with_channel(dict_wifi, aug_type, channel_method, num_aug_train, num_aug_test, keep_orig_train, keep_orig_test, num_ch_train, num_ch_test, channel_type_aug_train, channel_type_aug_test, delay_seed_aug_train, snr_train, noise_method, seed_aug, sampling_rate, data_format):
 
     x_train = dict_wifi['x_train'].copy()
     y_train = dict_wifi['y_train'].copy()
 
-    x_test = dict_wifi['x_test'].copy()
-    y_test = dict_wifi['y_test'].copy()
+    # x_test = dict_wifi['x_test'].copy()
+    # y_test = dict_wifi['y_test'].copy()
 
     num_train = dict_wifi['x_train'].shape[0]
-    num_test = dict_wifi['x_test'].shape[0]
-    num_classes = dict_wifi['y_train'].shape[1]
+    # num_test = dict_wifi['x_test'].shape[0]
+    # num_classes = dict_wifi['y_train'].shape[1]
 
     # print('\n-------------------------------')
 
@@ -325,35 +331,40 @@ def augment_with_channel(dict_wifi, aug_type, channel_method, num_aug_train, num
             for i in tqdm(range(num_train)):
                 signal = x_train[i][:, 0]+1j*x_train[i][:, 1]
                 if num_ch_train == -1:
-                    signal_faded = add_custom_fading_channel(signal, snr_train, sampling_rate,
-                                                             seed=seed_aug +
-                                                             (i + k*num_train) % (num_train*num_aug_train),
-                                                             beta=0,
-                                                             delay_seed=delay_seed_aug_train,
-                                                             channel_type=channel_type_aug_train,
-                                                             channel_method=channel_method,
-                                                             noise_method=noise_method)
+                    signal_faded = \
+                            add_custom_fading_channel(signal,
+                                                      snr_train, sampling_rate,
+                                                      seed=seed_aug +
+                                                      (i + k*num_train) % (num_train*num_aug_train),
+                                                      beta=0,
+                                                      delay_seed=delay_seed_aug_train,
+                                                      channel_type=channel_type_aug_train,
+                                                      channel_method=channel_method,
+                                                      noise_method=noise_method)
                 elif aug_type == 1:
-                    signal_faded = add_custom_fading_channel(signal, snr_train, sampling_rate,
-                                                             seed=channel_dict[np.argmax(
-                                                                 y_train[i])],
-                                                             beta=0,
-                                                             delay_seed=delay_seed_aug_train,
-                                                             channel_type=channel_type_aug_train,
-                                                             channel_method=channel_method,
-                                                             noise_method=noise_method)
+                    signal_faded = \
+                            add_custom_fading_channel(signal, snr_train,
+                                                      sampling_rate,
+                                                      seed=channel_dict[np.argmax(
+                                                          y_train[i])],
+                                                      beta=0,
+                                                      delay_seed=delay_seed_aug_train,
+                                                      channel_type=channel_type_aug_train,
+                                                      channel_method=channel_method,
+                                                      noise_method=noise_method)
                     channel_dict[np.argmax(y_train[i])] += 1
                 elif aug_type == 0:
-                    signal_faded = add_custom_fading_channel(signal, snr_train, sampling_rate,
-                                                             # seed = 0,
-                                                             seed=seed_aug + k * num_ch_train + \
-                                                             (i %
-                                                              num_ch_train),
-                                                             beta=0,
-                                                             delay_seed=delay_seed_aug_train,
-                                                             channel_type=channel_type_aug_train,
-                                                             channel_method=channel_method,
-                                                             noise_method=noise_method)
+                    signal_faded = \
+                            add_custom_fading_channel(signal, snr_train,
+                                                      sampling_rate,
+                                                      # seed = 0,
+                                                      seed=seed_aug + k * num_ch_train + \
+                                                              (i % num_ch_train),
+                                                      beta=0,
+                                                      delay_seed=delay_seed_aug_train,
+                                                      channel_type=channel_type_aug_train,
+                                                      channel_method=channel_method,
+                                                      noise_method=noise_method)
 
                 signal_faded = normalize(signal_faded)
                 signal_ch[i] = np.concatenate((signal_faded.real.reshape(

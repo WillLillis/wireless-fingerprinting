@@ -11,30 +11,21 @@ Real life channel and CFO experiments are done in this code.
 '''
 
 import numpy as np
-from timeit import default_timer as timer
-import argparse
-from tqdm import trange, tqdm
 import json
 import os
-import matplotlib as mpl
 import copy
 from collections import OrderedDict as odict
-import matplotlib.pyplot as plt
-
-from keras.regularizers import l2
 from keras.models import Model, load_model
-from keras.layers import Dense, Input, Activation, Conv1D, Dropout, GlobalAveragePooling1D, Lambda, Average
-from keras import optimizers, regularizers, losses
-from keras.utils import plot_model
-from keras import backend as K
-import keras
 
-from cxnn.complexnn import ComplexDense, ComplexConv1D, utils, Modrelu
-from simulators import physical_layer_channel, physical_layer_cfo, cfo_compansator, equalize_channel, augment_with_channel_test, augment_with_cfo_test, get_residual
+from cxnn.complexnn import ComplexConv1D, utils, Modrelu
+from simulators import physical_layer_channel, physical_layer_cfo, \
+        cfo_compansator, equalize_channel, augment_with_channel_test, \
+        augment_with_cfo_test, get_residual
 from experiment_setup import get_arguments
 
 
-def test_experiments(architecture, config, num_days, seed_days, seed_test_day, experiment_setup, testing_setup):
+def test_experiments(architecture, config, num_days, seed_days,
+                     seed_test_day, experiment_setup, testing_setup):
 
     # print(architecture)
 
@@ -42,8 +33,8 @@ def test_experiments(architecture, config, num_days, seed_days, seed_test_day, e
     # Analysis
     # -------------------------------------------------
 
-    plot_signal = False
-    check_signal_power_effect = False
+    # plot_signal = False
+    # check_signal_power_effect = False
 
     # -------------------------------------------------
     # Data configuration
@@ -56,7 +47,7 @@ def test_experiments(architecture, config, num_days, seed_days, seed_test_day, e
     # -------------------------------------------------
     # Training configuration
     # -------------------------------------------------
-    epochs = config['epochs']
+    # epochs = config['epochs']
 
     # -------------------------------------------------
     # Equalization before any preprocessing
@@ -75,9 +66,9 @@ def test_experiments(architecture, config, num_days, seed_days, seed_test_day, e
     seed_phy_test = seed_test_day
     channel_type_phy_train = config['channel_type_phy_train']
     channel_type_phy_test = config['channel_type_phy_test']
-    phy_noise = config['phy_noise']
-    snr_train_phy = config['snr_train_phy']
-    snr_test_phy = config['snr_test_phy']
+    # phy_noise = config['phy_noise']
+    # snr_train_phy = config['snr_train_phy']
+    # snr_test_phy = config['snr_test_phy']
 
     # -------------------------------------------------
     # Physical CFO parameters
@@ -114,13 +105,13 @@ def test_experiments(architecture, config, num_days, seed_days, seed_test_day, e
     num_ch_test = config['num_ch_test']
     channel_method = config['channel_method']
     noise_method = config['noise_method']
-    delay_seed_aug_train = False
+    # delay_seed_aug_train = False
     delay_seed_aug_test = False
     keep_orig_train = False
     keep_orig_test = False
     snr_train = config['snr_train']
     snr_test = config['snr_test']
-    beta = config['beta']
+    # beta = config['beta']
 
     # -------------------------------------------------
     # Augmentation CFO parameters
@@ -164,21 +155,22 @@ def test_experiments(architecture, config, num_days, seed_days, seed_test_day, e
     dict_wifi['fc_test'] = np_dict['arr_8.npy']
     dict_wifi['num_classes'] = dict_wifi['y_test'].shape[1]
 
-    x_test_orig = dict_wifi['x_test']
+    # x_test_orig = dict_wifi['x_test']
     y_test_orig = dict_wifi['y_test']
 
     data_format += '_{}'.format(architecture)
 
-    num_train = dict_wifi['x_train'].shape[0]
+    # num_train = dict_wifi['x_train'].shape[0]
     num_test = dict_wifi['x_test'].shape[0]
     num_classes = dict_wifi['y_train'].shape[1]
 
     sampling_rate = sample_rate * 1e+6
-    fs = sample_rate * 1e+6
+    # fs = sample_rate * 1e+6
 
     if equalize_train_before or equalize_test_before:
         print('\nEqualization Before')
-        print('\tTrain: {}, Test: {}'.format(equalize_train_before, equalize_test_before))
+        print('\tTrain: {}, Test: {}'.format(
+            equalize_train_before, equalize_test_before))
 
         data_format = data_format + '-eq'
 
@@ -193,30 +185,33 @@ def test_experiments(architecture, config, num_days, seed_days, seed_test_day, e
     # Physical channel simulation (different days)
     # --------------------------------------------------------------------------------------------
     if add_channel:
-        dict_wifi, data_format = physical_layer_channel(dict_wifi=dict_wifi,
-                                                        phy_method=phy_method,
-                                                        channel_type_phy_train=channel_type_phy_train,
-                                                        channel_type_phy_test=channel_type_phy_test,
-                                                        channel_method=channel_method,
-                                                        noise_method=noise_method,
-                                                        seed_phy_train=seed_phy_train,
-                                                        seed_phy_test=seed_phy_test,
-                                                        sampling_rate=sampling_rate,
-                                                        data_format=data_format)
+        dict_wifi, data_format = \
+            physical_layer_channel(dict_wifi=dict_wifi,
+                                   phy_method=phy_method,
+                                   channel_type_phy_train=channel_type_phy_train,
+                                   channel_type_phy_test=channel_type_phy_test,
+                                   channel_method=channel_method,
+                                   noise_method=noise_method,
+                                   seed_phy_train=seed_phy_train,
+                                   seed_phy_test=seed_phy_test,
+                                   sampling_rate=sampling_rate,
+                                   data_format=data_format)
 
     # --------------------------------------------------------------------------------------------
     # Physical offset simulation (different days)
     # --------------------------------------------------------------------------------------------
     if add_cfo:
 
-        dict_wifi, data_format = physical_layer_cfo(dict_wifi=dict_wifi,
-                                                    df_phy_train=df_phy_train,
-                                                    df_phy_test=df_phy_test,
-                                                    seed_phy_train_cfo=seed_phy_train_cfo,
-                                                    seed_phy_test_cfo=seed_phy_test_cfo,
-                                                    sampling_rate=sampling_rate,
-                                                    phy_method_cfo=phy_method_cfo,
-                                                    data_format=data_format)
+        dict_wifi, data_format = \
+                physical_layer_cfo(dict_wifi=dict_wifi,
+                                   df_phy_train=df_phy_train,
+                                   df_phy_test=df_phy_test,
+                                   seed_phy_train_cfo=seed_phy_train_cfo,
+                                   seed_phy_test_cfo=seed_phy_test_cfo,
+                                   sampling_rate=sampling_rate,
+                                   phy_method_cfo=phy_method_cfo,
+                                   data_format=data_format)
+
     if remove_cfo:
         data_format = data_format + '[_comp]-'
 
@@ -285,23 +280,24 @@ def test_experiments(architecture, config, num_days, seed_days, seed_test_day, e
         seed_aug = np.max(seed_phy_train) + seed_phy_test + num_classes + 1
         # import pdb
         # pdb.set_trace()
-        dict_wifi, data_format = augment_with_channel_test(dict_wifi=dict_wifi,
-                                                           aug_type=aug_type,
-                                                           channel_method=channel_method,
-                                                           num_aug_train=num_aug_train,
-                                                           num_aug_test=num_aug_test,
-                                                           keep_orig_train=keep_orig_train,
-                                                           keep_orig_test=keep_orig_test,
-                                                           num_ch_train=num_ch_train,
-                                                           num_ch_test=num_ch_test,
-                                                           channel_type_aug_train=channel_type_aug_train,
-                                                           channel_type_aug_test=channel_type_aug_test,
-                                                           delay_seed_aug_test=delay_seed_aug_test,
-                                                           snr_test=snr_test,
-                                                           noise_method=noise_method,
-                                                           seed_aug=seed_aug,
-                                                           sampling_rate=sampling_rate,
-                                                           data_format=data_format)
+        dict_wifi, data_format = \
+            augment_with_channel_test(dict_wifi=dict_wifi,
+                                      aug_type=aug_type,
+                                      channel_method=channel_method,
+                                      num_aug_train=num_aug_train,
+                                      num_aug_test=num_aug_test,
+                                      keep_orig_train=keep_orig_train,
+                                      keep_orig_test=keep_orig_test,
+                                      num_ch_train=num_ch_train,
+                                      num_ch_test=num_ch_test,
+                                      channel_type_aug_train=channel_type_aug_train,
+                                      channel_type_aug_test=channel_type_aug_test,
+                                      delay_seed_aug_test=delay_seed_aug_test,
+                                      snr_test=snr_test,
+                                      noise_method=noise_method,
+                                      seed_aug=seed_aug,
+                                      sampling_rate=sampling_rate,
+                                      data_format=data_format)
         # import pdb
         # pdb.set_trace()
 
@@ -415,7 +411,8 @@ def test_experiments(architecture, config, num_days, seed_days, seed_test_day, e
         label_act = dict_wifi['y_test'][:num_test].argmax(axis=1)
         ind_correct = np.where(label_pred_llr == label_act)[0]
         ind_wrong = np.where(label_pred_llr != label_act)[0]
-        assert (num_test == ind_wrong.size + ind_correct.size), 'Major calculation mistake!'
+        assert (num_test == ind_wrong.size + ind_correct.size), \
+            'Major calculation mistake!'
         test_acc_llr = 100.*ind_correct.size / num_test
 
         # Adding LLRs for num_channel_aug_test test augmentations
@@ -423,7 +420,8 @@ def test_experiments(architecture, config, num_days, seed_days, seed_test_day, e
         label_act = dict_wifi['y_test'][:num_test].argmax(axis=1)
         ind_correct = np.where(label_pred_soft == label_act)[0]
         ind_wrong = np.where(label_pred_soft != label_act)[0]
-        assert (num_test == ind_wrong.size + ind_correct.size), 'Major calculation mistake!'
+        assert (num_test == ind_wrong.size + ind_correct.size), \
+            'Major calculation mistake!'
         test_acc_soft = 100.*ind_correct.size / num_test
 
         # 1 test augmentation
@@ -433,7 +431,8 @@ def test_experiments(architecture, config, num_days, seed_days, seed_test_day, e
         label_pred = probs.argmax(axis=1)
         ind_correct = np.where(label_pred == label_act)[0]
         ind_wrong = np.where(label_pred != label_act)[0]
-        assert (num_test == ind_wrong.size + ind_correct.size), 'Major calculation mistake!'
+        assert (num_test == ind_wrong.size + ind_correct.size), \
+            'Major calculation mistake!'
         test_acc = 100.*ind_correct.size / num_test
 
         # No test augmentations
@@ -444,14 +443,17 @@ def test_experiments(architecture, config, num_days, seed_days, seed_test_day, e
         label_act = y_test_orig.argmax(axis=1)
         ind_correct = np.where(label_pred == label_act)[0]
         ind_wrong = np.where(label_pred != label_act)[0]
-        assert (num_test == ind_wrong.size + ind_correct.size), 'Major calculation mistake!'
+        assert (num_test == ind_wrong.size + ind_correct.size), \
+            'Major calculation mistake!'
         test_acc_no_aug = 100.*ind_correct.size / num_test
 
         # print("\n========================================")
         print('Test accuracy (0 aug): {:.2f}%'.format(test_acc_no_aug))
         print('Test accuracy (1 aug): {:.2f}%'.format(test_acc))
-        print('Test accuracy ({} aug) llr: {:.2f}%'.format(num_test_per_aug, test_acc_llr))
-        print('Test accuracy ({} aug) softmax avg: {:.2f}%'.format(num_test_per_aug, test_acc_soft))
+        print('Test accuracy ({} aug) llr: {:.2f}%'.format(
+            num_test_per_aug, test_acc_llr))
+        print('Test accuracy ({} aug) softmax avg: {:.2f}%'.format(
+            num_test_per_aug, test_acc_soft))
 
         output_dict['acc']['test_zero_aug'] = test_acc_no_aug
         output_dict['acc']['test_one_aug'] = test_acc
@@ -550,8 +552,12 @@ if __name__ == '__main__':
 
         seed_test = exp_i * max_seed + 60
         exp_list = [1, 2, 3, 4, 5]
-        seeds_train_multi = [[exp_i * max_seed + s*20 if exp_i * max_seed + s*20 <
-                              seed_test else exp_i * max_seed + (s+1)*20 for s in range(days)] for days in days_multi]
+        seeds_train_multi = [[exp_i * max_seed + s*20
+                              if exp_i * max_seed + s*20 < seed_test
+                              else exp_i * max_seed + (s+1)*20
+                              for s in range(days)]
+                             for days in days_multi]
+
         for i in range(len(seeds_train_multi)):
             assert seed_test not in seeds_train_multi[i]
 
@@ -565,8 +571,12 @@ if __name__ == '__main__':
                 f.write(json.dumps(config))
 
             for indexx, day_count in enumerate(days_multi):
-                test_output, total_aug_test = test_experiments(architecture, config, num_days=day_count, seed_days=seeds_train_multi[indexx], seed_test_day=seed_test, experiment_setup=experiment_setup,
-                                                               testing_setup=testing_setup)
+                test_output, total_aug_test = test_experiments(
+                        architecture, config, num_days=day_count,
+                        seed_days=seeds_train_multi[indexx],
+                        seed_test_day=seed_test,
+                        experiment_setup=experiment_setup,
+                        testing_setup=testing_setup)
 
                 with open("./logs/" + log_name + '.txt', 'a+') as f:
 
@@ -578,16 +588,20 @@ if __name__ == '__main__':
                         f.write('Number of training channel aug: {:}\n'.format(
                             config["num_aug_train"]))
 
-                    f.write('Number of test aug: {:}\n'.format(config["num_aug_test"]))
+                    f.write('Number of test aug: {:}\n'.format(
+                        config["num_aug_test"]))
                     f.write('\tExperiment: {:}\n'.format(exp_i + 1))
-                    f.write('\tSeed train: {:}\n'.format(seeds_train_multi[indexx]))
+                    f.write('\tSeed train: {:}\n'.format(
+                        seeds_train_multi[indexx]))
                     f.write('\tSeed test: {:}\n'.format(seed_test))
-                    f.write('\tNumber of augmentation test: {:}\n'.format(total_aug_test))
+                    f.write('\tNumber of augmentation test: {:}\n'.format(
+                        total_aug_test))
 
                     for keys, dicts in test_output.items():
                         f.write(str(keys)+':\n')
                         for key, value in dicts.items():
-                            f.write('\t'+str(key)+': {:.2f}%'.format(value)+'\n')
+                            f.write('\t'+str(key)+': {:.2f}%'.format(
+                                value)+'\n')
 
                     if day_count == days_multi[-1]:
                         f.write(

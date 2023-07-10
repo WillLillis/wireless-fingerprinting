@@ -7,7 +7,6 @@
 
 from keras import backend as K
 import sys; sys.path.append('.')
-from keras import backend as K
 from keras import activations, initializers, regularizers, constraints
 from keras.layers import Layer, InputSpec
 import numpy as np
@@ -128,6 +127,7 @@ class ComplexDense(Layer):
                 std=s,
                 dtype=dtype
             )
+
         def init_w_imag(shape, dtype=None):
             return rng.normal(
                 size=kernel_shape,
@@ -156,7 +156,7 @@ class ComplexDense(Layer):
             regularizer=self.kernel_regularizer,
             constraint=self.kernel_constraint
         )
-        
+
         if self.use_bias:
             self.bias = self.add_weight(
                 shape=(2 * self.units,),
@@ -172,11 +172,11 @@ class ComplexDense(Layer):
         self.built = True
 
     def call(self, inputs):
-        input_shape = K.shape(inputs)
-        input_dim = input_shape[-1] // 2
-        real_input = inputs[:, :input_dim]
-        imag_input = inputs[:, input_dim:]
-        
+        # input_shape = K.shape(inputs)
+        # input_dim = input_shape[-1] // 2
+        # real_input = inputs[:, :input_dim]
+        # imag_input = inputs[:, input_dim:]
+
         cat_kernels_4_real = K.concatenate(
             [self.real_kernel, -self.imag_kernel],
             axis=-1
@@ -227,4 +227,3 @@ class ComplexDense(Layer):
         }
         base_config = super(ComplexDense, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))
-

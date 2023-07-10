@@ -1,5 +1,7 @@
-from preproc.fading_model import normalize, add_custom_fading_channel, add_freq_offset
-from preproc.preproc_wifi import basic_equalize_preamble, offset_compensate_preamble, get_residuals_preamble
+from preproc.fading_model import normalize, add_custom_fading_channel, \
+        add_freq_offset
+from preproc.preproc_wifi import basic_equalize_preamble, \
+        offset_compensate_preamble, get_residuals_preamble
 import matplotlib.pyplot as plt
 '''
 All Simulation Codes needed for CFO and Channel Experiments
@@ -8,13 +10,8 @@ Need to add comment to the functions
 '''
 
 import numpy as np
-from timeit import default_timer as timer
-import argparse
 from tqdm import trange, tqdm
-import json
 import os
-import matplotlib as mpl
-
 
 
 # from freq_offset import estimate_freq_offset !!
@@ -69,16 +66,19 @@ def plot_signals(dict_wifi):
     #       plt.savefig(fig_name, format='pdf', dpi=1000, bbox_inches='tight')
 
 
-def physical_layer_channel(dict_wifi, phy_method, channel_type_phy_train, channel_type_phy_test, channel_method, noise_method, seed_phy_train, seed_phy_test, sampling_rate, data_format):
+def physical_layer_channel(dict_wifi, phy_method, channel_type_phy_train,
+                           channel_type_phy_test, channel_method, noise_method,
+                           seed_phy_train, seed_phy_test, sampling_rate,
+                           data_format):
 
     num_train = dict_wifi['x_train'].shape[0]
     num_test = dict_wifi['x_test'].shape[0]
     num_classes = dict_wifi['y_train'].shape[1]
 
-    x_train_orig = dict_wifi['x_train'].copy()
+    # x_train_orig = dict_wifi['x_train'].copy()
     y_train_orig = dict_wifi['y_train'].copy()
 
-    x_test_orig = dict_wifi['x_test'].copy()
+    # x_test_orig = dict_wifi['x_test'].copy()
     y_test_orig = dict_wifi['y_test'].copy()
 
     # --------------------------------------------------------------------------------------------
@@ -95,13 +95,13 @@ def physical_layer_channel(dict_wifi, phy_method, channel_type_phy_train, channe
         signal_ch = dict_wifi['x_train'].copy()
         for i in tqdm(range(num_train)):
             signal = dict_wifi['x_train'][i][:, 0]+1j*dict_wifi['x_train'][i][:, 1]
-            signal_faded = add_custom_fading_channel(signal, 500, sampling_rate,
-                                                     seed=seed_phy_train,
-                                                     beta=0,
-                                                     delay_seed=False,
-                                                     channel_type=channel_type_phy_train,
-                                                     channel_method=channel_method,
-                                                     noise_method=noise_method)
+            signal_faded = \
+                add_custom_fading_channel(signal, 500, sampling_rate,
+                                          seed=seed_phy_train, beta=0,
+                                          delay_seed=False,
+                                          channel_type=channel_type_phy_train,
+                                          channel_method=channel_method,
+                                          noise_method=noise_method)
             signal_faded = normalize(signal_faded)
             signal_ch[i] = np.concatenate((signal_faded.real.reshape(
                 [-1, 1]), signal_faded.imag.reshape([-1, 1])), axis=1).reshape((1, -1, 2))
@@ -110,13 +110,13 @@ def physical_layer_channel(dict_wifi, phy_method, channel_type_phy_train, channe
         signal_ch = dict_wifi['x_test'].copy()
         for i in tqdm(range(num_test)):
             signal = dict_wifi['x_test'][i][:, 0]+1j*dict_wifi['x_test'][i][:, 1]
-            signal_faded = add_custom_fading_channel(signal, 500, sampling_rate,
-                                                     seed=seed_phy_test,
-                                                     beta=0,
-                                                     delay_seed=False,
-                                                     channel_type=channel_type_phy_test,
-                                                     channel_method=channel_method,
-                                                     noise_method=noise_method)
+            signal_faded = \
+                add_custom_fading_channel(signal, 500, sampling_rate,
+                                          seed=seed_phy_test, beta=0,
+                                          delay_seed=False,
+                                          channel_type=channel_type_phy_test,
+                                          channel_method=channel_method,
+                                          noise_method=noise_method)
             signal_faded = normalize(signal_faded)
             signal_ch[i] = np.concatenate((signal_faded.real.reshape(
                 [-1, 1]), signal_faded.imag.reshape([-1, 1])), axis=1).reshape((1, -1, 2))
@@ -130,13 +130,13 @@ def physical_layer_channel(dict_wifi, phy_method, channel_type_phy_train, channe
             # print('{}: {}'.format(n, ind_n))
             for i in ind_n:
                 signal = dict_wifi['x_train'][i][:, 0]+1j*dict_wifi['x_train'][i][:, 1]
-                signal_faded = add_custom_fading_channel(signal, 500, sampling_rate,
-                                                         seed=seed_phy_train_n,
-                                                         beta=0,
-                                                         delay_seed=False,
-                                                         channel_type=channel_type_phy_train,
-                                                         channel_method=channel_method,
-                                                         noise_method=noise_method)
+                signal_faded = \
+                    add_custom_fading_channel(signal, 500, sampling_rate,
+                                              seed=seed_phy_train_n, beta=0,
+                                              delay_seed=False,
+                                              channel_type=channel_type_phy_train,
+                                              channel_method=channel_method,
+                                              noise_method=noise_method)
                 signal_faded = normalize(signal_faded)
                 # ipdb.set_trace()
                 signal_ch[i] = np.concatenate((signal_faded.real.reshape(
@@ -149,13 +149,13 @@ def physical_layer_channel(dict_wifi, phy_method, channel_type_phy_train, channe
             seed_phy_test_n = seed_phy_test + n
             for i in ind_n:
                 signal = dict_wifi['x_test'][i][:, 0]+1j*dict_wifi['x_test'][i][:, 1]
-                signal_faded = add_custom_fading_channel(signal, 500, sampling_rate,
-                                                         seed=seed_phy_test_n,
-                                                         beta=0,
-                                                         delay_seed=False,
-                                                         channel_type=channel_type_phy_test,
-                                                         channel_method=channel_method,
-                                                         noise_method=noise_method)
+                signal_faded = \
+                    add_custom_fading_channel(signal, 500, sampling_rate,
+                                              seed=seed_phy_test_n, beta=0,
+                                              delay_seed=False,
+                                              channel_type=channel_type_phy_test,
+                                              channel_method=channel_method,
+                                              noise_method=noise_method)
                 signal_faded = normalize(signal_faded)
                 signal_ch[i] = np.concatenate((signal_faded.real.reshape(
                     [-1, 1]), signal_faded.imag.reshape([-1, 1])), axis=1).reshape((1, -1, 2))
@@ -174,13 +174,13 @@ def physical_layer_channel(dict_wifi, phy_method, channel_type_phy_train, channe
 
                 for i in ind_n[j*num_signals_per_day:(j+1)*num_signals_per_day]:
                     signal = dict_wifi['x_train'][i][:, 0]+1j*dict_wifi['x_train'][i][:, 1]
-                    signal_faded = add_custom_fading_channel(signal, 500, sampling_rate,
-                                                             seed=seed_phy_train_n_j,
-                                                             beta=0,
-                                                             delay_seed=False,
-                                                             channel_type=channel_type_phy_train,
-                                                             channel_method=channel_method,
-                                                             noise_method=noise_method)
+                    signal_faded = \
+                        add_custom_fading_channel(signal, 500, sampling_rate,
+                                                  seed=seed_phy_train_n_j,
+                                                  beta=0, delay_seed=False,
+                                                  channel_type=channel_type_phy_train,
+                                                  channel_method=channel_method,
+                                                  noise_method=noise_method)
                     signal_faded = normalize(signal_faded)
                     signal_ch[i] = np.concatenate((signal_faded.real.reshape(
                         [-1, 1]), signal_faded.imag.reshape([-1, 1])), axis=1).reshape((1, -1, 2))
@@ -189,13 +189,13 @@ def physical_layer_channel(dict_wifi, phy_method, channel_type_phy_train, channe
             seed_phy_train_n_j = seed_phy_train[phy_method-1] + n
             for i in ind_n[(phy_method-1)*num_signals_per_day:]:
                 signal = dict_wifi['x_train'][i][:, 0]+1j*dict_wifi['x_train'][i][:, 1]
-                signal_faded = add_custom_fading_channel(signal, 500, sampling_rate,
-                                                         seed=seed_phy_train_n_j,
-                                                         beta=0,
-                                                         delay_seed=False,
-                                                         channel_type=channel_type_phy_train,
-                                                         channel_method=channel_method,
-                                                         noise_method=noise_method)
+                signal_faded = \
+                    add_custom_fading_channel(signal, 500, sampling_rate,
+                                              seed=seed_phy_train_n_j, beta=0,
+                                              delay_seed=False,
+                                              channel_type=channel_type_phy_train,
+                                              channel_method=channel_method,
+                                              noise_method=noise_method)
                 signal_faded = normalize(signal_faded)
                 signal_ch[i] = np.concatenate((signal_faded.real.reshape(
                     [-1, 1]), signal_faded.imag.reshape([-1, 1])), axis=1).reshape((1, -1, 2))
@@ -207,13 +207,13 @@ def physical_layer_channel(dict_wifi, phy_method, channel_type_phy_train, channe
             seed_phy_test_n = seed_phy_test + n
             for i in ind_n:
                 signal = dict_wifi['x_test'][i][:, 0]+1j*dict_wifi['x_test'][i][:, 1]
-                signal_faded = add_custom_fading_channel(signal, 500, sampling_rate,
-                                                         seed=seed_phy_test_n,
-                                                         beta=0,
-                                                         delay_seed=False,
-                                                         channel_type=channel_type_phy_test,
-                                                         channel_method=channel_method,
-                                                         noise_method=noise_method)
+                signal_faded = \
+                    add_custom_fading_channel(signal, 500, sampling_rate,
+                                              seed=seed_phy_test_n, beta=0,
+                                              delay_seed=False,
+                                              channel_type=channel_type_phy_test,
+                                              channel_method=channel_method,
+                                              noise_method=noise_method)
                 signal_faded = normalize(signal_faded)
                 signal_ch[i] = np.concatenate((signal_faded.real.reshape(
                     [-1, 1]), signal_faded.imag.reshape([-1, 1])), axis=1).reshape((1, -1, 2))
@@ -225,13 +225,17 @@ def physical_layer_channel(dict_wifi, phy_method, channel_type_phy_train, channe
     return dict_wifi, data_format
 
 
-def physical_layer_cfo(dict_wifi, df_phy_train, df_phy_test, seed_phy_train_cfo, seed_phy_test_cfo, sampling_rate, phy_method_cfo,  data_format):
+def physical_layer_cfo(dict_wifi, df_phy_train, df_phy_test,
+                       seed_phy_train_cfo, seed_phy_test_cfo,
+                       sampling_rate, phy_method_cfo, data_format):
 
     print('\n---------------------------------------------')
     print('Physical offset simulation (different days)')
     print('---------------------------------------------')
-    print('Physical offsets: Train: {}, Test: {} ppm'.format(df_phy_train*1e6, df_phy_test*1e6))
-    print('Physical seeds: Train: {}, Test: {}\n'.format(seed_phy_train_cfo, seed_phy_test_cfo))
+    print('Physical offsets: Train: {}, Test: {} ppm'.format(
+        df_phy_train*1e6, df_phy_test*1e6))
+    print('Physical seeds: Train: {}, Test: {}\n'.format(
+        seed_phy_train_cfo, seed_phy_test_cfo))
 
     x_train_orig = dict_wifi['x_train'].copy()
     y_train_orig = dict_wifi['y_train'].copy()
@@ -328,7 +332,7 @@ def cfo_compansator(dict_wifi, sampling_rate, data_format):
 
     num_train = dict_wifi['x_train'].shape[0]
     num_test = dict_wifi['x_test'].shape[0]
-    num_classes = dict_wifi['y_train'].shape[1]
+    # num_classes = dict_wifi['y_train'].shape[1]
 
     complex_train = x_train[..., 0] + 1j * x_train[..., 1]
     complex_test = x_test[..., 0] + 1j * x_test[..., 1]
@@ -357,7 +361,8 @@ def cfo_compansator(dict_wifi, sampling_rate, data_format):
     return dict_wifi, data_format
 
 
-def equalize_channel(dict_wifi, sampling_rate, data_format, verbosity, which_set='x_train'):
+def equalize_channel(dict_wifi, sampling_rate, data_format,
+                     verbosity, which_set='x_train'):
     # print('\nEqualizing training preamble')
 
     num_set = dict_wifi[which_set].shape[0]
@@ -377,7 +382,8 @@ def equalize_channel(dict_wifi, sampling_rate, data_format, verbosity, which_set
     return dict_wifi, data_format
 
 
-def get_residual(dict_wifi, sampling_rate, data_format, verbosity, which_set='x_train'):
+def get_residual(dict_wifi, sampling_rate, data_format,
+                 verbosity, which_set='x_train'):
     # print('\nEqualizing training preamble')
 
     num_set = dict_wifi[which_set].shape[0]
@@ -401,17 +407,22 @@ def get_residual(dict_wifi, sampling_rate, data_format, verbosity, which_set='x_
     return dict_wifi, data_format
 
 
-def augment_with_channel(dict_wifi, aug_type, channel_method, num_aug_train, num_aug_test, keep_orig_train, keep_orig_test, num_ch_train, num_ch_test, channel_type_aug_train, channel_type_aug_test, delay_seed_aug_train, snr_train, noise_method, seed_aug, sampling_rate, data_format):
+def augment_with_channel(dict_wifi, aug_type, channel_method, num_aug_train,
+                         num_aug_test, keep_orig_train, keep_orig_test,
+                         num_ch_train, num_ch_test, channel_type_aug_train,
+                         channel_type_aug_test, delay_seed_aug_train,
+                         snr_train, noise_method, seed_aug, sampling_rate,
+                         data_format):
 
     x_train = dict_wifi['x_train'].copy()
     y_train = dict_wifi['y_train'].copy()
 
-    x_test = dict_wifi['x_test'].copy()
-    y_test = dict_wifi['y_test'].copy()
+    # x_test = dict_wifi['x_test'].copy()
+    # y_test = dict_wifi['y_test'].copy()
 
     num_train = dict_wifi['x_train'].shape[0]
-    num_test = dict_wifi['x_test'].shape[0]
-    num_classes = dict_wifi['y_train'].shape[1]
+    # num_test = dict_wifi['x_test'].shape[0]
+    # num_classes = dict_wifi['y_train'].shape[1]
 
     # print('\n-------------------------------')
 
@@ -440,34 +451,40 @@ def augment_with_channel(dict_wifi, aug_type, channel_method, num_aug_train, num
             for i in tqdm(range(num_train)):
                 signal = x_train[i][:, 0]+1j*x_train[i][:, 1]
                 if num_ch_train == -1:
-                    signal_faded = add_custom_fading_channel(signal, snr_train, sampling_rate,
-                                                             seed=seed_aug +
-                                                             (i + k*num_train) % (num_train*num_aug_train),
-                                                             beta=0,
-                                                             delay_seed=delay_seed_aug_train,
-                                                             channel_type=channel_type_aug_train,
-                                                             channel_method=channel_method,
-                                                             noise_method=noise_method)
+                    signal_faded = \
+                        add_custom_fading_channel(signal, snr_train,
+                                                  sampling_rate,
+                                                  seed=seed_aug +
+                                                  (i + k*num_train) % (num_train*num_aug_train),
+                                                  beta=0,
+                                                  delay_seed=delay_seed_aug_train,
+                                                  channel_type=channel_type_aug_train,
+                                                  channel_method=channel_method,
+                                                  noise_method=noise_method)
                 elif aug_type == 1:
-                    signal_faded = add_custom_fading_channel(signal, snr_train, sampling_rate,
-                                                             seed=channel_dict[np.argmax(
-                                                                 y_train[i])],
-                                                             beta=0,
-                                                             delay_seed=delay_seed_aug_train,
-                                                             channel_type=channel_type_aug_train,
-                                                             channel_method=channel_method,
-                                                             noise_method=noise_method)
+                    signal_faded = \
+                        add_custom_fading_channel(signal, snr_train,
+                                                  sampling_rate,
+                                                  seed=channel_dict[np.argmax(
+                                                      y_train[i])],
+                                                  beta=0,
+                                                  delay_seed=delay_seed_aug_train,
+                                                  channel_type=channel_type_aug_train,
+                                                  channel_method=channel_method,
+                                                  noise_method=noise_method)
                     channel_dict[np.argmax(y_train[i])] += 1
                 elif aug_type == 0:
-                    signal_faded = add_custom_fading_channel(signal, snr_train, sampling_rate,
-                                                             # seed = 0,
-                                                             seed=seed_aug + k * num_ch_train + \
-                                                             (i % num_ch_train),
-                                                             beta=0,
-                                                             delay_seed=delay_seed_aug_train,
-                                                             channel_type=channel_type_aug_train,
-                                                             channel_method=channel_method,
-                                                             noise_method=noise_method)
+                    signal_faded = \
+                        add_custom_fading_channel(signal, snr_train,
+                                                  sampling_rate,
+                                                  # seed = 0,
+                                                  seed=seed_aug + k * num_ch_train + \
+                                                          (i % num_ch_train),
+                                                  beta=0,
+                                                  delay_seed=delay_seed_aug_train,
+                                                  channel_type=channel_type_aug_train,
+                                                  channel_method=channel_method,
+                                                  noise_method=noise_method)
 
                 signal_faded = normalize(signal_faded)
                 signal_ch[i] = np.concatenate((signal_faded.real.reshape(
@@ -496,14 +513,19 @@ def augment_with_channel(dict_wifi, aug_type, channel_method, num_aug_train, num
     return dict_wifi, data_format
 
 
-def augment_with_channel_test(dict_wifi, aug_type, channel_method, num_aug_train, num_aug_test, keep_orig_train, keep_orig_test, num_ch_train, num_ch_test, channel_type_aug_train, channel_type_aug_test, delay_seed_aug_test, snr_test, noise_method, seed_aug, sampling_rate, data_format):
+def augment_with_channel_test(dict_wifi, aug_type, channel_method,
+                              num_aug_train, num_aug_test, keep_orig_train,
+                              keep_orig_test, num_ch_train, num_ch_test,
+                              channel_type_aug_train, channel_type_aug_test,
+                              delay_seed_aug_test, snr_test, noise_method,
+                              seed_aug, sampling_rate, data_format):
 
     x_test = dict_wifi['x_test'].copy()
     y_test = dict_wifi['y_test'].copy()
 
     num_train = dict_wifi['x_train'].shape[0]
     num_test = dict_wifi['x_test'].shape[0]
-    num_classes = dict_wifi['y_train'].shape[1]
+    # num_classes = dict_wifi['y_train'].shape[1]
 
     x_test_aug = x_test.copy()
     y_test_aug = y_test.copy()
@@ -516,25 +538,29 @@ def augment_with_channel_test(dict_wifi, aug_type, channel_method, num_aug_train
             for i in tqdm(range(num_test)):
                 signal = dict_wifi['x_test'][i][:, 0]+1j*dict_wifi['x_test'][i][:, 1]
                 if num_ch_test == -1:
-                    signal_faded = add_custom_fading_channel(signal, snr_test, sampling_rate,
-                                                             seed=seed_aug + num_train*num_aug_train + 1 +
-                                                             (i + k*num_test) % (num_test*num_aug_test),
-                                                             beta=0,
-                                                             delay_seed=delay_seed_aug_test,
-                                                             channel_type=channel_type_aug_test,
-                                                             channel_method=channel_method,
-                                                             noise_method=noise_method)
+                    signal_faded = \
+                        add_custom_fading_channel(signal, snr_test,
+                                                  sampling_rate,
+                                                  seed=seed_aug + num_train*num_aug_train + 1 +
+                                                  (i + k*num_test) % (num_test*num_aug_test),
+                                                  beta=0,
+                                                  delay_seed=delay_seed_aug_test,
+                                                  channel_type=channel_type_aug_test,
+                                                  channel_method=channel_method,
+                                                  noise_method=noise_method)
                 else:
-                    signal_faded = add_custom_fading_channel(signal, snr_test, sampling_rate,
-                                                             # seed = 1,
-                                                             seed=seed_aug + num_train*num_aug_train + \
-                                                             1 + (i % num_ch_test) + \
-                                                             k * num_ch_test,
-                                                             beta=0,
-                                                             delay_seed=delay_seed_aug_test,
-                                                             channel_type=channel_type_aug_test,
-                                                             channel_method=channel_method,
-                                                             noise_method=noise_method)
+                    signal_faded = \
+                        add_custom_fading_channel(signal, snr_test,
+                                                  sampling_rate,
+                                                  # seed = 1,
+                                                  seed=seed_aug + num_train*num_aug_train + \
+                                                          1 + (i % num_ch_test) + \
+                                                          k * num_ch_test,
+                                                  beta=0,
+                                                  delay_seed=delay_seed_aug_test,
+                                                  channel_type=channel_type_aug_test,
+                                                  channel_method=channel_method,
+                                                  noise_method=noise_method)
 
                 signal_faded = normalize(signal_faded)
                 signal_ch[i] = np.concatenate((signal_faded.real.reshape(
@@ -560,7 +586,9 @@ def augment_with_channel_test(dict_wifi, aug_type, channel_method, num_aug_train
     return dict_wifi, data_format
 
 
-def augment_with_cfo(dict_wifi, aug_type_cfo, df_aug_train, num_aug_train_cfo, keep_orig_train_cfo, rand_aug_train, sampling_rate, seed_aug_cfo, data_format):
+def augment_with_cfo(dict_wifi, aug_type_cfo, df_aug_train, num_aug_train_cfo,
+                     keep_orig_train_cfo, rand_aug_train, sampling_rate,
+                     seed_aug_cfo, data_format):
 
     print('\nCFO augmentation')
     print('\tAugmentation type: {}'.format(aug_type_cfo))
@@ -574,8 +602,8 @@ def augment_with_cfo(dict_wifi, aug_type_cfo, df_aug_train, num_aug_train_cfo, k
     fc_test_orig = dict_wifi['fc_test']
 
     num_train = dict_wifi['x_train'].shape[0]
-    num_test = dict_wifi['x_test'].shape[0]
-    num_classes = dict_wifi['y_train'].shape[1]
+    # num_test = dict_wifi['x_test'].shape[0]
+    # num_classes = dict_wifi['y_train'].shape[1]
 
     if aug_type_cfo == 0:
         for k in tqdm(range(num_aug_train_cfo)):
@@ -635,7 +663,9 @@ def augment_with_cfo(dict_wifi, aug_type_cfo, df_aug_train, num_aug_train_cfo, k
     return dict_wifi, data_format
 
 
-def augment_with_cfo_test(dict_wifi, aug_type_cfo, df_aug_test, num_aug_test_cfo, keep_orig_test_cfo, rand_aug_test, sampling_rate):
+def augment_with_cfo_test(dict_wifi, aug_type_cfo, df_aug_test,
+                          num_aug_test_cfo, keep_orig_test_cfo,
+                          rand_aug_test, sampling_rate):
 
     print('\nCFO augmentation')
     print('\tAugmentation type: {}'.format(aug_type_cfo))

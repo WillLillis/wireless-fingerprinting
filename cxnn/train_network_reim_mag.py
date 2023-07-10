@@ -2,26 +2,17 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import os
 import numpy as np
-import numpy.random as random
 from collections import OrderedDict as odict
-from sklearn import metrics
-
-import keras
-from keras import backend as K
-from keras.utils import plot_model
-from keras import optimizers, regularizers, losses
-from keras.layers import Dense, Input, Activation, Conv1D, Dropout, GlobalAveragePooling1D, Lambda, Average
+from keras import optimizers
+from keras.layers import Dense, Input, Conv1D, GlobalAveragePooling1D
 from keras.models import Model, load_model
 from keras.regularizers import l2
-
-from cxnn.complexnn import ComplexDense, ComplexConv1D, utils, Modrelu
-
-
+import complexnn
+from cxnn.complexnn import ComplexConv1D, utils, Modrelu
 
 
-def network_20_modrelu_short(data_input, classes_num=10, weight_decay = 1e-4):
+def network_20_modrelu_short(data_input, classes_num=10, weight_decay=1e-4):
     '''
     Network that gets 99% acc on 20 MHz WiFi-2 data without channel
     '''
@@ -35,11 +26,11 @@ def network_20_modrelu_short(data_input, classes_num=10, weight_decay = 1e-4):
     filters = 100
     k_size = 20
     strides = 10
-    o = ComplexConv1D(filters=filters, 
-                      kernel_size=[k_size], 
-                      strides=strides, 
-                      padding='valid', 
-                      activation=None, 
+    o = ComplexConv1D(filters=filters,
+                      kernel_size=[k_size],
+                      strides=strides,
+                      padding='valid',
+                      activation=None,
                       name="ComplexConv1", **convArgs)(data_input)
     model_name = model_name + "-" + str(filters) + "C" + str(k_size) + "x" + str(strides)
     ########################
@@ -53,11 +44,11 @@ def network_20_modrelu_short(data_input, classes_num=10, weight_decay = 1e-4):
     filters = 100
     k_size = 10
     strides = 1
-    o = ComplexConv1D(filters=filters, 
-                      kernel_size=[k_size], 
-                      strides=strides, 
-                      padding='valid', 
-                      activation=None, 
+    o = ComplexConv1D(filters=filters,
+                      kernel_size=[k_size],
+                      strides=strides,
+                      padding='valid',
+                      activation=None,
                       name="ComplexConv2", **convArgs)(o)
     model_name = model_name + "-" + str(filters) + "C" + str(k_size) + "x" + str(strides)
     #########################
@@ -81,20 +72,21 @@ def network_20_modrelu_short(data_input, classes_num=10, weight_decay = 1e-4):
     neuron_num = 100
     o = Dense(neuron_num,
               activation='relu',
-              kernel_initializer="he_normal", 
-              kernel_regularizer=l2(weight_decay), 
+              kernel_initializer="he_normal",
+              kernel_regularizer=l2(weight_decay),
               name="Dense1")(o)
     model_name = model_name + "-" + str(neuron_num) + "D"
     ########################
 
-    x = Dense(classes_num, 
-              activation='softmax', 
-              kernel_initializer="he_normal", 
+    x = Dense(classes_num,
+              activation='softmax',
+              kernel_initializer="he_normal",
               name="Dense2")(o)
 
-    return x , model_name
+    return x, model_name
 
-def network_20_reim(data_input, classes_num=10, weight_decay = 1e-4):
+
+def network_20_reim(data_input, classes_num=10, weight_decay=1e-4):
     '''
     Network that gets 99% acc on 20 MHz WiFi-2 data without channel
     '''
@@ -106,25 +98,24 @@ def network_20_reim(data_input, classes_num=10, weight_decay = 1e-4):
     filters = 100
     k_size = 20
     strides = 10
-    o = Conv1D(filters=filters, 
-               kernel_size=[k_size], 
-               strides=strides, 
-               padding='valid', 
-               activation='relu', 
+    o = Conv1D(filters=filters,
+               kernel_size=[k_size],
+               strides=strides,
+               padding='valid',
+               activation='relu',
                name="Conv1", **convArgs)(data_input)
     model_name = model_name + "-" + str(filters) + "C" + str(k_size) + "x" + str(strides)
     ########################
-
 
     ########################
     filters = 100
     k_size = 10
     strides = 1
-    o = Conv1D(filters=filters, 
-               kernel_size=[k_size], 
-               strides=strides, 
-               padding='valid', 
-               activation='relu', 
+    o = Conv1D(filters=filters,
+               kernel_size=[k_size],
+               strides=strides,
+               padding='valid',
+               activation='relu',
                name="Conv2", **convArgs)(o)
     model_name = model_name + "-" + str(filters) + "C" + str(k_size) + "x" + str(strides)
     #########################
@@ -138,24 +129,25 @@ def network_20_reim(data_input, classes_num=10, weight_decay = 1e-4):
     neuron_num = 100
     o = Dense(neuron_num,
               activation='relu',
-              kernel_initializer="he_normal", 
-              kernel_regularizer=l2(weight_decay), 
+              kernel_initializer="he_normal",
+              kernel_regularizer=l2(weight_decay),
               name="Dense1")(o)
     model_name = model_name + "-" + str(neuron_num) + "D"
     ########################
 
     # o = Dropout(0.5)(o)
 
-    x = Dense(classes_num, 
-              activation='softmax', 
-              kernel_initializer="he_normal", 
+    x = Dense(classes_num,
+              activation='softmax',
+              kernel_initializer="he_normal",
               name="Dense2")(o)
 
     model_name = model_name + "_reim"
 
-    return x , model_name
+    return x, model_name
 
-def network_20_reim_2x(data_input, classes_num=10, weight_decay = 1e-4):
+
+def network_20_reim_2x(data_input, classes_num=10, weight_decay=1e-4):
     '''
     Network that gets 99% acc on 20 MHz WiFi-2 data without channel
     '''
@@ -167,25 +159,24 @@ def network_20_reim_2x(data_input, classes_num=10, weight_decay = 1e-4):
     filters = 200
     k_size = 20
     strides = 10
-    o = Conv1D(filters=filters, 
-               kernel_size=[k_size], 
-               strides=strides, 
-               padding='valid', 
-               activation='relu', 
+    o = Conv1D(filters=filters,
+               kernel_size=[k_size],
+               strides=strides,
+               padding='valid',
+               activation='relu',
                name="Conv1", **convArgs)(data_input)
     model_name = model_name + "-" + str(filters) + "C" + str(k_size) + "x" + str(strides)
     ########################
-
 
     ########################
     filters = 200
     k_size = 10
     strides = 1
-    o = Conv1D(filters=filters, 
-               kernel_size=[k_size], 
-               strides=strides, 
-               padding='valid', 
-               activation='relu', 
+    o = Conv1D(filters=filters,
+               kernel_size=[k_size],
+               strides=strides,
+               padding='valid',
+               activation='relu',
                name="Conv2", **convArgs)(o)
     model_name = model_name + "-" + str(filters) + "C" + str(k_size) + "x" + str(strides)
     #########################
@@ -199,22 +190,23 @@ def network_20_reim_2x(data_input, classes_num=10, weight_decay = 1e-4):
     neuron_num = 100
     o = Dense(neuron_num,
               activation='relu',
-              kernel_initializer="he_normal", 
-              kernel_regularizer=l2(weight_decay), 
+              kernel_initializer="he_normal",
+              kernel_regularizer=l2(weight_decay),
               name="Dense1")(o)
     model_name = model_name + "-" + str(neuron_num) + "D"
     ########################
 
-    x = Dense(classes_num, 
-              activation='softmax', 
-              kernel_initializer="he_normal", 
+    x = Dense(classes_num,
+              activation='softmax',
+              kernel_initializer="he_normal",
               name="Dense2")(o)
 
     model_name = model_name + "_reim_2x"
 
-    return x , model_name
+    return x, model_name
 
-def network_20_reim_sqrt2x(data_input, classes_num=10, weight_decay = 1e-4):
+
+def network_20_reim_sqrt2x(data_input, classes_num=10, weight_decay=1e-4):
     '''
     Network that gets 99% acc on 20 MHz WiFi-2 data without channel
     '''
@@ -226,25 +218,24 @@ def network_20_reim_sqrt2x(data_input, classes_num=10, weight_decay = 1e-4):
     filters = 140
     k_size = 20
     strides = 10
-    o = Conv1D(filters=filters, 
-               kernel_size=[k_size], 
-               strides=strides, 
-               padding='valid', 
-               activation='relu', 
+    o = Conv1D(filters=filters,
+               kernel_size=[k_size],
+               strides=strides,
+               padding='valid',
+               activation='relu',
                name="Conv1", **convArgs)(data_input)
     model_name = model_name + "-" + str(filters) + "C" + str(k_size) + "x" + str(strides)
     ########################
-
 
     ########################
     filters = 140
     k_size = 10
     strides = 1
-    o = Conv1D(filters=filters, 
-               kernel_size=[k_size], 
-               strides=strides, 
-               padding='valid', 
-               activation='relu', 
+    o = Conv1D(filters=filters,
+               kernel_size=[k_size],
+               strides=strides,
+               padding='valid',
+               activation='relu',
                name="Conv2", **convArgs)(o)
     model_name = model_name + "-" + str(filters) + "C" + str(k_size) + "x" + str(strides)
     #########################
@@ -258,15 +249,15 @@ def network_20_reim_sqrt2x(data_input, classes_num=10, weight_decay = 1e-4):
     neuron_num = 100
     o = Dense(neuron_num,
               activation='relu',
-              kernel_initializer="he_normal", 
-              kernel_regularizer=l2(weight_decay), 
+              kernel_initializer="he_normal",
+              kernel_regularizer=l2(weight_decay),
               name="Dense1")(o)
     model_name = model_name + "-" + str(neuron_num) + "D"
     ########################
 
-    x = Dense(classes_num, 
-              activation='softmax', 
-              kernel_initializer="he_normal", 
+    x = Dense(classes_num,
+              activation='softmax',
+              kernel_initializer="he_normal",
               name="Dense2")(o)
 
     model_name = model_name + "_reim_sqrt2x"
@@ -275,10 +266,9 @@ def network_20_reim_sqrt2x(data_input, classes_num=10, weight_decay = 1e-4):
 
 def network_20_mag(data_input, classes_num=10, weight_decay=1e-4, num_features=320):
 
-    convArgs = dict(use_bias=True,
-                    kernel_regularizer=l2(weight_decay))
+    # convArgs = dict(use_bias=True,
+    #                 kernel_regularizer=l2(weight_decay))
     model_name = "MODEL:"
-
 
     o = data_input
 
@@ -325,13 +315,12 @@ def network_20_mag(data_input, classes_num=10, weight_decay=1e-4, num_features=3
               activation='softmax',
               kernel_initializer="he_normal", name="Dense2")(o)
 
-
     model_name = model_name + "_mag"
 
     return x, model_name
 
 
-def network_200_modrelu_short(data_input, classes_num=10, weight_decay = 1e-4):
+def network_200_modrelu_short(data_input, classes_num=10, weight_decay=1e-4):
     '''
     Network that gets 99% acc on 20 MHz WiFi-2 data without channel
     '''
@@ -345,11 +334,11 @@ def network_200_modrelu_short(data_input, classes_num=10, weight_decay = 1e-4):
     filters = 100
     k_size = 200
     strides = 100
-    o = ComplexConv1D(filters=filters, 
-                      kernel_size=[k_size], 
-                      strides=strides, 
-                      padding='valid', 
-                      activation=None, 
+    o = ComplexConv1D(filters=filters,
+                      kernel_size=[k_size],
+                      strides=strides,
+                      padding='valid',
+                      activation=None,
                       name="ComplexConv1", **convArgs)(data_input)
     model_name = model_name + "-" + str(filters) + "C" + str(k_size) + "x" + str(strides)
     ########################
@@ -363,11 +352,11 @@ def network_200_modrelu_short(data_input, classes_num=10, weight_decay = 1e-4):
     filters = 100
     k_size = 10
     strides = 1
-    o = ComplexConv1D(filters=filters, 
-                      kernel_size=[k_size], 
-                      strides=strides, 
-                      padding='valid', 
-                      activation=None, 
+    o = ComplexConv1D(filters=filters,
+                      kernel_size=[k_size],
+                      strides=strides,
+                      padding='valid',
+                      activation=None,
                       name="ComplexConv2", **convArgs)(o)
     model_name = model_name + "-" + str(filters) + "C" + str(k_size) + "x" + str(strides)
     #########################
@@ -385,10 +374,10 @@ def network_200_modrelu_short(data_input, classes_num=10, weight_decay = 1e-4):
     ########################
     neuron_num = 100
     shared_dense = Dense(neuron_num,
-              activation='relu',
-              kernel_initializer="he_normal", 
-              kernel_regularizer=l2(weight_decay),
-              name="Shared_Dense1")
+                         activation='relu',
+                         kernel_initializer="he_normal",
+                         kernel_regularizer=l2(weight_decay),
+                         name="Shared_Dense1")
     model_name = model_name + "-" + str(neuron_num) + "shared_D"
     ########################
 
@@ -397,10 +386,10 @@ def network_200_modrelu_short(data_input, classes_num=10, weight_decay = 1e-4):
     ########################
     neuron_num = 100
     shared_dense2 = Dense(neuron_num,
-              activation='relu',
-              kernel_initializer="he_normal", 
-              kernel_regularizer=l2(weight_decay),
-              name="Shared_Dense2")
+                          activation='relu',
+                          kernel_initializer="he_normal",
+                          kernel_regularizer=l2(weight_decay),
+                          name="Shared_Dense2")
     model_name = model_name + "-" + str(neuron_num) + "shared_D"
     ########################
 
@@ -411,14 +400,15 @@ def network_200_modrelu_short(data_input, classes_num=10, weight_decay = 1e-4):
     model_name = model_name + "-Avg"
     ########################
 
-    x = Dense(classes_num, 
-              activation='softmax', 
-              kernel_initializer="he_normal", 
+    x = Dense(classes_num,
+              activation='softmax',
+              kernel_initializer="he_normal",
               name="Dense3")(o)
 
-    return x , model_name
+    return x, model_name
 
-def network_200_reim(data_input, classes_num=10, weight_decay = 1e-4):
+
+def network_200_reim(data_input, classes_num=10, weight_decay=1e-4):
     '''
     Network that gets 99% acc on 20 MHz WiFi-2 data without channel
     '''
@@ -430,25 +420,24 @@ def network_200_reim(data_input, classes_num=10, weight_decay = 1e-4):
     filters = 100
     k_size = 200
     strides = 100
-    o = Conv1D(filters=filters, 
-               kernel_size=[k_size], 
-               strides=strides, 
-               padding='valid', 
-               activation='relu', 
+    o = Conv1D(filters=filters,
+               kernel_size=[k_size],
+               strides=strides,
+               padding='valid',
+               activation='relu',
                name="Conv1", **convArgs)(data_input)
     model_name = model_name + "-" + str(filters) + "C" + str(k_size) + "x" + str(strides)
     ########################
-
 
     ########################
     filters = 100
     k_size = 10
     strides = 1
-    o = Conv1D(filters=filters, 
-               kernel_size=[k_size], 
-               strides=strides, 
-               padding='valid', 
-               activation='relu', 
+    o = Conv1D(filters=filters,
+               kernel_size=[k_size],
+               strides=strides,
+               padding='valid',
+               activation='relu',
                name="Conv2", **convArgs)(o)
     model_name = model_name + "-" + str(filters) + "C" + str(k_size) + "x" + str(strides)
     #########################
@@ -456,10 +445,10 @@ def network_200_reim(data_input, classes_num=10, weight_decay = 1e-4):
     ########################
     neuron_num = 100
     shared_dense = Dense(neuron_num,
-              activation='relu',
-              kernel_initializer="he_normal", 
-              kernel_regularizer=l2(weight_decay),
-              name="Shared_Dense1")
+                         activation='relu',
+                         kernel_initializer="he_normal",
+                         kernel_regularizer=l2(weight_decay),
+                         name="Shared_Dense1")
     model_name = model_name + "-" + str(neuron_num) + "shared_D"
     ########################
 
@@ -468,10 +457,10 @@ def network_200_reim(data_input, classes_num=10, weight_decay = 1e-4):
     ########################
     neuron_num = 100
     shared_dense2 = Dense(neuron_num,
-              activation='relu',
-              kernel_initializer="he_normal", 
-              kernel_regularizer=l2(weight_decay),
-              name="Shared_Dense2")
+                          activation='relu',
+                          kernel_initializer="he_normal",
+                          kernel_regularizer=l2(weight_decay),
+                          name="Shared_Dense2")
     model_name = model_name + "-" + str(neuron_num) + "shared_D"
     ########################
 
@@ -482,16 +471,17 @@ def network_200_reim(data_input, classes_num=10, weight_decay = 1e-4):
     model_name = model_name + "-Avg"
     ########################
 
-    x = Dense(classes_num, 
-              activation='softmax', 
-              kernel_initializer="he_normal", 
+    x = Dense(classes_num,
+              activation='softmax',
+              kernel_initializer="he_normal",
               name="Dense3")(o)
 
     model_name = model_name + "_reim"
 
-    return x , model_name
+    return x, model_name
 
-def network_200_reim_2x(data_input, classes_num=10, weight_decay = 1e-4):
+
+def network_200_reim_2x(data_input, classes_num=10, weight_decay=1e-4):
     '''
     Network that gets 99% acc on 20 MHz WiFi-2 data without channel
     '''
@@ -503,25 +493,24 @@ def network_200_reim_2x(data_input, classes_num=10, weight_decay = 1e-4):
     filters = 200
     k_size = 200
     strides = 100
-    o = Conv1D(filters=filters, 
-               kernel_size=[k_size], 
-               strides=strides, 
-               padding='valid', 
-               activation='relu', 
+    o = Conv1D(filters=filters,
+               kernel_size=[k_size],
+               strides=strides,
+               padding='valid',
+               activation='relu',
                name="Conv1", **convArgs)(data_input)
     model_name = model_name + "-" + str(filters) + "C" + str(k_size) + "x" + str(strides)
     ########################
-
 
     ########################
     filters = 200
     k_size = 10
     strides = 1
-    o = Conv1D(filters=filters, 
-               kernel_size=[k_size], 
-               strides=strides, 
-               padding='valid', 
-               activation='relu', 
+    o = Conv1D(filters=filters,
+               kernel_size=[k_size],
+               strides=strides,
+               padding='valid',
+               activation='relu',
                name="Conv2", **convArgs)(o)
     model_name = model_name + "-" + str(filters) + "C" + str(k_size) + "x" + str(strides)
     #########################
@@ -529,10 +518,10 @@ def network_200_reim_2x(data_input, classes_num=10, weight_decay = 1e-4):
     ########################
     neuron_num = 100
     shared_dense = Dense(neuron_num,
-              activation='relu',
-              kernel_initializer="he_normal", 
-              kernel_regularizer=l2(weight_decay),
-              name="Shared_Dense1")
+                         activation='relu',
+                         kernel_initializer="he_normal",
+                         kernel_regularizer=l2(weight_decay),
+                         name="Shared_Dense1")
     model_name = model_name + "-" + str(neuron_num) + "shared_D"
     ########################
 
@@ -541,10 +530,10 @@ def network_200_reim_2x(data_input, classes_num=10, weight_decay = 1e-4):
     ########################
     neuron_num = 100
     shared_dense2 = Dense(neuron_num,
-              activation='relu',
-              kernel_initializer="he_normal", 
-              kernel_regularizer=l2(weight_decay),
-              name="Shared_Dense2")
+                          activation='relu',
+                          kernel_initializer="he_normal",
+                          kernel_regularizer=l2(weight_decay),
+                          name="Shared_Dense2")
     model_name = model_name + "-" + str(neuron_num) + "shared_D"
     ########################
 
@@ -555,16 +544,17 @@ def network_200_reim_2x(data_input, classes_num=10, weight_decay = 1e-4):
     model_name = model_name + "-Avg"
     ########################
 
-    x = Dense(classes_num, 
-              activation='softmax', 
-              kernel_initializer="he_normal", 
+    x = Dense(classes_num,
+              activation='softmax',
+              kernel_initializer="he_normal",
               name="Dense3")(o)
 
     model_name = model_name + "_reim_2x"
 
-    return x , model_name
+    return x, model_name
 
-def network_200_reim_sqrt2x(data_input, classes_num=10, weight_decay = 1e-4):
+
+def network_200_reim_sqrt2x(data_input, classes_num=10, weight_decay=1e-4):
     '''
     Network that gets 99% acc on 20 MHz WiFi-2 data without channel
     '''
@@ -576,25 +566,24 @@ def network_200_reim_sqrt2x(data_input, classes_num=10, weight_decay = 1e-4):
     filters = 140
     k_size = 200
     strides = 100
-    o = Conv1D(filters=filters, 
-               kernel_size=[k_size], 
-               strides=strides, 
-               padding='valid', 
-               activation='relu', 
+    o = Conv1D(filters=filters,
+               kernel_size=[k_size],
+               strides=strides,
+               padding='valid',
+               activation='relu',
                name="Conv1", **convArgs)(data_input)
     model_name = model_name + "-" + str(filters) + "C" + str(k_size) + "x" + str(strides)
     ########################
-
 
     ########################
     filters = 140
     k_size = 10
     strides = 1
-    o = Conv1D(filters=filters, 
-               kernel_size=[k_size], 
-               strides=strides, 
-               padding='valid', 
-               activation='relu', 
+    o = Conv1D(filters=filters,
+               kernel_size=[k_size],
+               strides=strides,
+               padding='valid',
+               activation='relu',
                name="Conv2", **convArgs)(o)
     model_name = model_name + "-" + str(filters) + "C" + str(k_size) + "x" + str(strides)
     #########################
@@ -602,10 +591,10 @@ def network_200_reim_sqrt2x(data_input, classes_num=10, weight_decay = 1e-4):
     ########################
     neuron_num = 100
     shared_dense = Dense(neuron_num,
-              activation='relu',
-              kernel_initializer="he_normal", 
-              kernel_regularizer=l2(weight_decay),
-              name="Shared_Dense1")
+                         activation='relu',
+                         kernel_initializer="he_normal",
+                         kernel_regularizer=l2(weight_decay),
+                         name="Shared_Dense1")
     model_name = model_name + "-" + str(neuron_num) + "shared_D"
     ########################
 
@@ -614,10 +603,10 @@ def network_200_reim_sqrt2x(data_input, classes_num=10, weight_decay = 1e-4):
     ########################
     neuron_num = 100
     shared_dense2 = Dense(neuron_num,
-              activation='relu',
-              kernel_initializer="he_normal", 
-              kernel_regularizer=l2(weight_decay),
-              name="Shared_Dense2")
+                          activation='relu',
+                          kernel_initializer="he_normal",
+                          kernel_regularizer=l2(weight_decay),
+                          name="Shared_Dense2")
     model_name = model_name + "-" + str(neuron_num) + "shared_D"
     ########################
 
@@ -628,29 +617,30 @@ def network_200_reim_sqrt2x(data_input, classes_num=10, weight_decay = 1e-4):
     model_name = model_name + "-Avg"
     ########################
 
-    x = Dense(classes_num, 
-              activation='softmax', 
-              kernel_initializer="he_normal", 
+    x = Dense(classes_num,
+              activation='softmax',
+              kernel_initializer="he_normal",
               name="Dense3")(o)
 
-    return x , model_name
+    return x, model_name
 
 
-def train(dict_data, checkpoint_in=None, checkpoint_out=None, architecture='modrelu', fs=20):
+def train(dict_data, checkpoint_in=None, checkpoint_out=None,
+          architecture='modrelu', fs=20):
 
     x_train = dict_data['x_train']
     y_train = dict_data['y_train']
     x_test = dict_data['x_test']
     y_test = dict_data['y_test']
     num_classes = dict_data['num_classes']
-    num_train = x_train.shape[0]
+    # num_train = x_train.shape[0]
     num_test = x_test.shape[0]
     num_features = x_train.shape[1]
 
     print('Training data size: {}'.format(x_train.shape))
     print('Test data size: {}'.format(x_test.shape))
 
-    batch_size = 100    
+    batch_size = 100
     epochs = 500
     weight_decay = 1e-4
 
@@ -659,14 +649,14 @@ def train(dict_data, checkpoint_in=None, checkpoint_out=None, architecture='modr
     y_val = y_test[:n_val].copy()
     print('\n----------------------------')
     print('Setting validation = First {} samples of test'.format(n_val))
-    print('----------------------------\n') 
+    print('----------------------------\n')
 
-    print("========================================") 
-    print("MODEL HYPER-PARAMETERS") 
-    print("BATCH SIZE: {:3d}".format(batch_size)) 
+    print("========================================")
+    print("MODEL HYPER-PARAMETERS")
+    print("BATCH SIZE: {:3d}".format(batch_size))
     print("WEIGHT DECAY: {:.4f}".format(weight_decay))
     print("EPOCHS: {:3d}".format(epochs))
-    print("========================================") 
+    print("========================================")
     print("== BUILDING MODEL... ==")
 
 
@@ -678,14 +668,14 @@ def train(dict_data, checkpoint_in=None, checkpoint_out=None, architecture='modr
 
     # Load architecture
 
-    if fs==20:
-        if architecture=='reim':
+    if fs == 20:
+        if architecture == 'reim':
             output, model_name = network_20_reim(data_input, num_classes, weight_decay)
-        elif architecture=='reim2x':
+        elif architecture == 'reim2x':
             output, model_name = network_20_reim_2x(data_input, num_classes, weight_decay)
-        elif architecture=='reimsqrt2x':
+        elif architecture == 'reimsqrt2x':
             output, model_name = network_20_reim_sqrt2x(data_input, num_classes, weight_decay)
-        elif architecture=='magnitude':
+        elif architecture == 'magnitude':
             x_train = np.abs(x_train[..., 0] + 1j*x_train[..., 1])
             x_test = np.abs(x_test[..., 0] + 1j*x_test[..., 1])
             x_val = np.abs(x_val[..., 0] + 1j*x_val[..., 1])
@@ -703,7 +693,7 @@ def train(dict_data, checkpoint_in=None, checkpoint_out=None, architecture='modr
             # x_val = (x_val - mean) / std
 
             output, model_name = network_20_mag(data_input, num_classes, weight_decay, num_features)
-        elif architecture=='phase':
+        elif architecture == 'phase':
             x_train = np.angle(x_train[..., 0] + 1j*x_train[..., 1])
             x_test = np.angle(x_test[..., 0] + 1j*x_test[..., 1])
             x_val = np.angle(x_val[..., 0] + 1j*x_val[..., 1])
@@ -721,7 +711,7 @@ def train(dict_data, checkpoint_in=None, checkpoint_out=None, architecture='modr
             # x_val = (x_val - mean) / std
 
             output, model_name = network_20_mag(data_input, num_classes, weight_decay, num_features)
-        elif architecture=='re':
+        elif architecture == 're':
             x_train = x_train[..., 0]
             x_test = x_test[..., 0]
             x_val = x_val[..., 0]
@@ -739,7 +729,7 @@ def train(dict_data, checkpoint_in=None, checkpoint_out=None, architecture='modr
             # x_val = (x_val - mean) / std
 
             output, model_name = network_20_mag(data_input, num_classes, weight_decay, num_features)
-        elif architecture=='im':
+        elif architecture == 'im':
             x_train = x_train[..., 1]
             x_test = x_test[..., 1]
             x_val = x_val[..., 1]
@@ -757,19 +747,19 @@ def train(dict_data, checkpoint_in=None, checkpoint_out=None, architecture='modr
             # x_val = (x_val - mean) / std
 
             output, model_name = network_20_mag(data_input, num_classes, weight_decay, num_features)
-        elif architecture=='modrelu':
+        elif architecture == 'modrelu':
             output, model_name = network_20_modrelu_short(data_input, num_classes, weight_decay)
-        elif architecture=='crelu':
+        elif architecture == 'crelu':
             raise NotImplementedError
 
-    elif fs==200:
-        if architecture=='reim':
+    elif fs == 200:
+        if architecture == 'reim':
             output, model_name = network_200_reim(data_input, num_classes, weight_decay)
-        elif architecture=='reim2x':
+        elif architecture == 'reim2x':
             output, model_name = network_200_reim_2x(data_input, num_classes, weight_decay)
-        elif architecture=='reimsqrt2x':
+        elif architecture == 'reimsqrt2x':
             output, model_name = network_200_reim_sqrt2x(data_input, num_classes, weight_decay)
-        elif architecture=='modrelu':
+        elif architecture == 'modrelu':
             output, model_name = network_200_modrelu_short(data_input, num_classes, weight_decay)
         else:
             raise NotImplementedError
@@ -778,7 +768,7 @@ def train(dict_data, checkpoint_in=None, checkpoint_out=None, architecture='modr
     if checkpoint_in is None:
         densenet = Model(data_input, output)
     else:
-        densenet = load_model(checkpoint_in, 
+        densenet = load_model(checkpoint_in,
                               custom_objects={'ComplexConv1D':complexnn.ComplexConv1D,
                                               'GetAbs': utils.GetAbs})
 
@@ -792,13 +782,12 @@ def train(dict_data, checkpoint_in=None, checkpoint_out=None, architecture='modr
 
     densenet.compile(loss='categorical_crossentropy', optimizer=optimizer, metrics=['accuracy'])
 
-
     print("== START TRAINING... ==")
-    history = densenet.fit(x=x_train, 
-                           y=y_train, 
-                           epochs=epochs, 
-                           batch_size=batch_size, 
-                           validation_data=(x_val, y_val), 
+    history = densenet.fit(x=x_train,
+                           y=y_train,
+                           epochs=epochs,
+                           batch_size=batch_size,
+                           validation_data=(x_val, y_val),
                            callbacks=[])
 
     if checkpoint_out is not None:
@@ -806,10 +795,10 @@ def train(dict_data, checkpoint_in=None, checkpoint_out=None, architecture='modr
         densenet.save(checkpoint_out)
 
     probs = densenet.predict(x=x_test, batch_size=batch_size, verbose=0)
-    label_pred = probs.argmax(axis=1) 
-    label_act = y_test.argmax(axis=1) 
-    ind_correct = np.where(label_pred==label_act)[0] 
-    ind_wrong = np.where(label_pred!=label_act)[0] 
+    label_pred = probs.argmax(axis=1)
+    label_act = y_test.argmax(axis=1)
+    ind_correct = np.where(label_pred == label_act)[0]
+    ind_wrong = np.where(label_pred != label_act)[0]
     assert (num_test == ind_wrong.size + ind_correct.size), 'Major calculation mistake!'
     test_acc = 100.*ind_correct.size / num_test
 
@@ -821,7 +810,7 @@ def train(dict_data, checkpoint_in=None, checkpoint_out=None, architecture='modr
     # plt.title('Test confusion matrix')
     # plt.colorbar()
 
-    print("\n========================================") 
+    print("\n========================================")
     print('Test accuracy: {:.2f}%'.format(test_acc))
 
     output_dict = odict(acc=odict(), comp=odict(), loss=odict())
@@ -836,10 +825,11 @@ def train(dict_data, checkpoint_in=None, checkpoint_out=None, architecture='modr
     stringlist = []
     densenet.summary(print_fn=lambda x: stringlist.append(x))
     summary = '\n' + \
-            'Batch size: {:3d}\n'.format(batch_size) + \
-            'Weight decay: {:.4f}\n'.format(weight_decay) + \
-            'Epochs: {:3d}\n'.format(epochs) + \
-            'Optimizer:' + str(densenet.optimizer) + '\n'
+        'Batch size: {:3d}\n'.format(batch_size) + \
+        'Weight decay: {:.4f}\n'.format(weight_decay) + \
+        'Epochs: {:3d}\n'.format(epochs) + \
+        'Optimizer:' + str(densenet.optimizer) + '\n'
     summary += '\n'.join(stringlist)
 
     return output_dict, model_name, summary
+

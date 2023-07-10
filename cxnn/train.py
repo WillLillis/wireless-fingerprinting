@@ -3,25 +3,24 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import os
 import numpy as np
-import numpy.random as random
 from collections import OrderedDict as odict
-from sklearn import metrics
 
 import keras
-from keras import backend as K
-from keras.utils import plot_model
-from keras import optimizers, regularizers, losses
-from keras.layers import Dense, Input, Activation, Conv1D, Dropout, GlobalAveragePooling1D, Lambda, Average
+from keras import optimizers
+from keras.layers import Input
 from keras.models import Model, load_model
-from keras.regularizers import l2
+import complexnn
+from cxnn.complexnn import ComplexConv1D, utils, Modrelu
+from cxnn.models import network_20_modrelu_short, network_20_reim, \
+        network_20_reim_2x, network_20_reim_sqrt2x, network_20_mag, \
+        network_200_reim, network_200_reim_2x, network_200_reim_sqrt2x, \
+        network_200_mag, network_200_modrelu_short_shared
 
-from cxnn.complexnn import ComplexDense, ComplexConv1D, utils, Modrelu
-from cxnn.models import network_20_modrelu_short, network_20_reim, network_20_reim_2x, network_20_reim_sqrt2x, network_20_mag, network_200_modrelu_short, network_200_reim, network_200_reim_2x, network_200_reim_sqrt2x, network_200_mag, network_200_modrelu_short_shared
 
-
-def train_20(dict_data, num_aug_test=1, checkpoint_in=None, checkpoint_out=None, architecture='modrelu', epochs=200, n_val=True):
+def train_20(dict_data, num_aug_test=1, checkpoint_in=None,
+             checkpoint_out=None, architecture='modrelu',
+             epochs=200, n_val=True):
 
     x_train = dict_data['x_train']
     y_train = dict_data['y_train']
@@ -29,7 +28,7 @@ def train_20(dict_data, num_aug_test=1, checkpoint_in=None, checkpoint_out=None,
     y_test = dict_data['y_test']
 
     num_classes = dict_data['num_classes']
-    num_train = x_train.shape[0]
+    # num_train = x_train.shape[0]
     num_test = x_test.shape[0]
     num_features = x_train.shape[1]
 
@@ -269,7 +268,9 @@ def train_20(dict_data, num_aug_test=1, checkpoint_in=None, checkpoint_out=None,
     return output_dict, model_name, summary
 
 
-def train_200(dict_data, num_aug_test=1, checkpoint_in=None, checkpoint_out=None, architecture='modrelu', epochs=200, n_val=True):
+def train_200(dict_data, num_aug_test=1, checkpoint_in=None,
+              checkpoint_out=None, architecture='modrelu', epochs=200,
+              n_val=True):
 
     x_train = dict_data['x_train']
     y_train = dict_data['y_train']

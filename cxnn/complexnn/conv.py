@@ -6,40 +6,35 @@
 
 from keras import backend as K
 from keras import activations, initializers, regularizers, constraints
-from keras.layers import Lambda, Layer, InputSpec, Convolution1D, Convolution2D, add, multiply, Activation, Input, concatenate
+from keras.layers import Layer, InputSpec
 from keras.layers.convolutional import _Conv
-from keras.layers.merge import _Merge
-from keras.layers.recurrent import Recurrent
 from keras.utils import conv_utils
-from keras.models import Model
 import numpy as np
-from theano.sandbox.rng_mrg import MRG_RandomStreams as RandomStreams
-from .fft import fft, ifft, fft2, ifft2
+from .fft import ifft, ifft2
 from .bn import ComplexBN as complex_normalization
 from .bn import sqrt_init
 from .init import ComplexInit, ComplexIndependentFilters
-from .norm import LayerNormalization, ComplexLayerNorm
-
 
 
 def sanitizedInitGet(init):
-	if   init in ["sqrt_init"]:
-		return sqrt_init
-	elif init in ["complex", "complex_independent",
-	              "glorot_complex", "he_complex"]:
-		return init
-	else:
-		return initializers.get(init)
-def sanitizedInitSer(init):
-	if init in [sqrt_init]:
-		return "sqrt_init"
-	elif init == "complex" or isinstance(init, ComplexInit):
-		return "complex"
-	elif init == "complex_independent" or isinstance(init, ComplexIndependentFilters):
-		return "complex_independent"
-	else:
-		return initializers.serialize(init)
+    if init in ["sqrt_init"]:
+        return sqrt_init
+    elif init in ["complex", "complex_independent",
+                  "glorot_complex", "he_complex"]:
+        return init
+    else:
+        return initializers.get(init)
 
+
+def sanitizedInitSer(init):
+    if init in [sqrt_init]:
+        return "sqrt_init"
+    elif init == "complex" or isinstance(init, ComplexInit):
+        return "complex"
+    elif init == "complex_independent" or isinstance(init, ComplexIndependentFilters):
+        return "complex_independent"
+    else:
+        return initializers.serialize(init)
 
 
 class ComplexConv(Layer):
@@ -90,7 +85,7 @@ class ComplexConv(Layer):
             Then, a complex multiplication is perfromed as the normalized weights are
             multiplied by the complex scaling factor gamma.
         kernel_initializer: Initializer for the complex `kernel` weights matrix.
-            By default it is 'complex'. The 'complex_independent' 
+            By default it is 'complex'. The 'complex_independent'
             and the usual initializers could also be used.
             (see keras.initializers and init.py).
         bias_initializer: Initializer for the bias vector
@@ -182,12 +177,12 @@ class ComplexConv(Layer):
             raise ValueError('The channel dimension of the inputs '
                              'should be defined. Found `None`.')
         input_dim = input_shape[channel_axis] // 2
-        self.kernel_shape = self.kernel_size + (input_dim , self.filters)
+        self.kernel_shape = self.kernel_size + (input_dim, self.filters)
         # The kernel shape here is a complex kernel shape:
         #   nb of complex feature maps = input_dim;
         #   nb of output complex feature maps = self.filters;
-        #   imaginary kernel size = real kernel size 
-        #                         = self.kernel_size 
+        #   imaginary kernel size = real kernel size
+        #                         = self.kernel_size
         #                         = complex kernel size
         if self.kernel_initializer in {'complex', 'complex_independent'}:
             kls = {'complex':             ComplexInit,
@@ -201,7 +196,7 @@ class ComplexConv(Layer):
             )
         else:
             kern_init = self.kernel_initializer
-        
+
         self.kernel = self.add_weight(
             self.kernel_shape,
             initializer=kern_init,
@@ -280,9 +275,9 @@ class ComplexConv(Layer):
         # processing if the weights are assumed to be represented in the spectral domain
 
         if self.spectral_parametrization:
-            if   self.rank == 1:
-                f_real = K.permute_dimensions(f_real, (2,1,0))
-                f_imag = K.permute_dimensions(f_imag, (2,1,0))
+            if self.rank == 1:
+                f_real = K.permute_dimensions(f_real, (2, 1, 0))
+                f_imag = K.permute_dimensions(f_imag, (2, 1, 0))
                 f      = K.concatenate([f_real, f_imag], axis=0)
                 fshape = K.shape(f)
                 f      = K.reshape(f, (fshape[0] * fshape[1], fshape[2]))
@@ -290,11 +285,11 @@ class ComplexConv(Layer):
                 f      = K.reshape(f, fshape)
                 f_real = f[:fshape[0]//2]
                 f_imag = f[fshape[0]//2:]
-                f_real = K.permute_dimensions(f_real, (2,1,0))
-                f_imag = K.permute_dimensions(f_imag, (2,1,0))
+                f_real = K.permute_dimensions(f_real, (2, 1, 0))
+                f_imag = K.permute_dimensions(f_imag, (2, 1, 0))
             elif self.rank == 2:
-                f_real = K.permute_dimensions(f_real, (3,2,0,1))
-                f_imag = K.permute_dimensions(f_imag, (3,2,0,1))
+                f_real = K.permute_dimensions(f_real, (3, 2, 0, 1))
+                f_imag = K.permute_dimensions(f_imag, (3, 2, 0, 1))
                 f      = K.concatenate([f_real, f_imag], axis=0)
                 fshape = K.shape(f)
                 f      = K.reshape(f, (fshape[0] * fshape[1], fshape[2], fshape[3]))
@@ -302,8 +297,8 @@ class ComplexConv(Layer):
                 f      = K.reshape(f, fshape)
                 f_real = f[:fshape[0]//2]
                 f_imag = f[fshape[0]//2:]
-                f_real = K.permute_dimensions(f_real, (2,3,1,0))
-                f_imag = K.permute_dimensions(f_imag, (2,3,1,0))
+                f_real = K.permute_dimensions(f_real, (2, 3, 1, 0))
+                f_imag = K.permute_dimensions(f_imag, (2, 3, 1, 0))
 
         # In case of weight normalization, real and imaginary weights are normalized
 
@@ -328,14 +323,14 @@ class ComplexConv(Layer):
             Vii = K.mean(reshaped_f_imag_centred ** 2, axis=reduction_axes) + self.epsilon
             Vri = K.mean(reshaped_f_real_centred * reshaped_f_imag_centred,
                          axis=reduction_axes) + self.epsilon
-            
+
             normalized_weight = complex_normalization(
                 K.concatenate([reshaped_f_real, reshaped_f_imag], axis=-1),
                 Vrr, Vii, Vri,
-                beta = None,
-                gamma_rr = self.gamma_rr,
-                gamma_ri = self.gamma_ri,
-                gamma_ii = self.gamma_ii,
+                beta=None,
+                gamma_rr=self.gamma_rr,
+                gamma_ri=self.gamma_ri,
+                gamma_ii=self.gamma_ii,
                 scale=True,
                 center=False,
                 axis=-1
@@ -476,8 +471,8 @@ class ComplexConv1D(ComplexConv):
             Then, a complex multiplication is perfromed as the normalized weights are
             multiplied by the complex scaling factor gamma.
         kernel_initializer: Initializer for the complex `kernel` weights matrix.
-			By default it is 'complex'. The 'complex_independent' 
-			and the usual initializers could also be used.
+            By default it is 'complex'. The 'complex_independent'
+            and the usual initializers could also be used.
             (see keras.initializers and init.py).
         bias_initializer: Initializer for the bias vector
             (see keras.initializers).
@@ -551,7 +546,7 @@ class ComplexConv1D(ComplexConv):
 class ComplexConv2D(ComplexConv):
     """2D Complex convolution layer (e.g. spatial convolution over images).
     This layer creates a complex convolution kernel that is convolved
-    with a complex input layer to produce a complex output tensor. If `use_bias` 
+    with a complex input layer to produce a complex output tensor. If `use_bias`
     is True, a complex bias vector is created and added to the outputs.
     Finally, if `activation` is not `None`, it is applied to both the
     real and imaginary parts of the output.
@@ -604,8 +599,8 @@ class ComplexConv2D(ComplexConv):
             Then, a complex multiplication is perfromed as the normalized weights are
             multiplied by the complex scaling factor gamma.
         kernel_initializer: Initializer for the complex `kernel` weights matrix.
-			By default it is 'complex'. The 'complex_independent' 
-			and the usual initializers could also be used.
+            By default it is 'complex'. The 'complex_independent'
+            and the usual initializers could also be used.
             (see keras.initializers and init.py).
         bias_initializer: Initializer for the bias vector
             (see keras.initializers).
@@ -740,8 +735,8 @@ class ComplexConv3D(ComplexConv):
             Then, a complex multiplication is perfromed as the normalized weights are
             multiplied by the complex scaling factor gamma.
         kernel_initializer: Initializer for the complex `kernel` weights matrix.
-			By default it is 'complex'. The 'complex_independent' 
-			and the usual initializers could also be used.
+            By default it is 'complex'. The 'complex_independent'
+            and the usual initializers could also be used.
             (see keras.initializers and init.py).
         bias_initializer: Initializer for the bias vector
             (see keras.initializers).
@@ -819,12 +814,12 @@ class ComplexConv3D(ComplexConv):
 
 
 class WeightNorm_Conv(_Conv):
-	# Real-valued Convolutional Layer that normalizes its weights
-	# before convolving the input.
-	# The weight Normalization performed the one
-	# described in the following paper:
-	# Weight Normalization: A Simple Reparameterization to Accelerate Training of Deep Neural Networks
-	# (see https://arxiv.org/abs/1602.07868)
+    # Real-valued Convolutional Layer that normalizes its weights
+    # before convolving the input.
+    # The weight Normalization performed the one
+    # described in the following paper:
+    # Weight Normalization: A Simple Reparameterization to Accelerate Training of Deep Neural Networks
+    # (see https://arxiv.org/abs/1602.07868)
 
     def __init__(self,
                  gamma_initializer='ones',
@@ -877,8 +872,8 @@ class WeightNorm_Conv(_Conv):
         normalized_weight = K.reshape(self.gamma, (1, ker_shape[-2] * ker_shape[-1])) * normalized_weight
         shaped_kernel = K.reshape(normalized_weight, ker_shape)
         shaped_kernel._keras_shape = ker_shape
-        
-        convArgs = {"strides":       self.strides[0]       if self.rank == 1 else self.strides,
+
+        convArgs = {"strides":       self.strides[0] if self.rank == 1 else self.strides,
                     "padding":       self.padding,
                     "data_format":   self.data_format,
                     "dilation_rate": self.dilation_rate[0] if self.rank == 1 else self.dilation_rate}
@@ -908,7 +903,6 @@ class WeightNorm_Conv(_Conv):
         }
         base_config = super(WeightNorm_Conv, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))
-
 
 
 # Aliases

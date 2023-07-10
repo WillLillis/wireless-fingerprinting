@@ -181,7 +181,7 @@ def add_noise(data_dict, snr=20, progress=True):
         signal_indices = tqdm(signal_indices)
 
     for i in signal_indices:
-        sampling_rate = data_dict['sample_rate'][i]
+        # sampling_rate = data_dict['sample_rate'][i]
         signal = data_dict['signal'][i]
         # signal = signal[:np.int(math.ceil(sample_duration*sampling_rate))]
 
@@ -198,7 +198,8 @@ def add_noise(data_dict, snr=20, progress=True):
     return data_dict
 
 
-def add_fading_channel(data_dict, seed=0, snr=20, beta=0.5, num_ch=1, progress=True, sample_duration=20.):
+def add_fading_channel(data_dict, seed=0, snr=20, beta=0.5,
+                       num_ch=1, progress=True, sample_duration=20.):
     '''
     Passes given signal through fading channel
     '''
